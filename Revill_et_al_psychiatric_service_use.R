@@ -36,7 +36,7 @@ library(doRNG)
 library(ggplot2)
 
 # Remove everything from memory if needed to start afresh
-rm(list = ls())
+# rm(list = ls())
 
 # Set data and output directories
 data_dir = "S:/ABCDPsychosis/ABCD4.0/"
