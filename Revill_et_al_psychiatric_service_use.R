@@ -1,13 +1,12 @@
 ################################################################
 #
-# Analysis of Child Behaviour Checklist (CBCL) and DSM diagnoses
-# outcomes (from KSADS) from the study:
+# Analysis of psychiatric service use from the study:
 #
 # Mild TBI but not Orthopaedic Injury Associated with Subsequent
 # Psychiatric Problems and Increased Mental Health Service Use in
 # 9-12-year-old Children
 #
-# Revill et al 
+# Revill et al
 #
 ################################################################
 
@@ -71,11 +70,9 @@ tbi_long <- read_abcd_file("abcd_lsstbi01.txt")
 oi_baseline <- read_abcd_file("abcd_mx01.txt")
 oi_long <- read_abcd_file("abcd_lssmh01.txt")
 
-# CBCL
-parent_cbcl <- read_abcd_file("abcd_cbcls01.txt")
-
-# KSAD 
-ksad_parent <- read_abcd_file("abcd_ksad01.txt")
+# Psychiatric service use 
+psyc_services_baseline <- read_abcd_file("dibf01.txt")
+psyc_services_long <- read_abcd_file("abcd_lpksad01.txt")
 
 # Covariates
 ethnicity <- read_abcd_file("acspsw03.txt")
@@ -98,7 +95,6 @@ tbi_baseline <- tbi_baseline %>%
   rename(tbi_severity = tbi_ss_worst_overall) %>%
   filter(eventname == 'baseline_year_1_arm_1') %>%
   select(subjectkey, interview_age, sex, tbi_severity)  
-
 
 # Recode TBI severity variable at baseline (include only possible mild and mild TBI cases)
 tbi_baseline$tbi_severity[tbi_baseline$tbi_severity == 1] <- 0 #None/improbable 
@@ -181,89 +177,149 @@ oi_2_year$broken_bones_2_year[oi_2_year$broken_bones_2_year == 1] <- 1
 # Set data type and level labels
 oi_2_year$broken_bones_2_year <- factor(oi_2_year$broken_bones_2_year, levels = c(1,0), labels = c("Yes", "No"))
 
-# Rename CBCL variables 
-parent_cbcl <- parent_cbcl %>%
-  rename(cbcl_tot_problems = cbcl_scr_syn_totprob_r) %>%
-  rename(cbcl_int_problems = cbcl_scr_syn_internal_r) %>%
-  rename(cbcl_ext_problems = cbcl_scr_syn_external_r) %>%
-  rename(cbcl_dep_score = cbcl_scr_dsm5_depress_r) %>%
-  rename(cbcl_anx_score = cbcl_scr_dsm5_anxdisord_r) %>%
-  rename(cbcl_somatic_score = cbcl_scr_dsm5_somaticpr_r) %>%
-  rename(cbcl_adhd_score = cbcl_scr_dsm5_adhd_r) %>%
-  rename(cbcl_odd_score = cbcl_scr_dsm5_opposit_r) %>%
-  rename(cbcl_conduct_score = cbcl_scr_dsm5_conduct_r) 
+# Rename and select psychiatric service use variables at baseline
+psyc_services_baseline <- psyc_services_baseline %>%
+  rename(any_support = kbi_p_c_mh_sa) %>% 
+  rename(outpatient = kbi_p_c_scheck1) %>%
+  rename(inpatient = kbi_p_c_scheck3) %>%
+  rename(psychotherapy = kbi_p_c_scheck7) %>%
+  rename(medication = kbi_p_c_scheck8) %>%
+  select(subjectkey, any_support, outpatient, inpatient, 
+         psychotherapy, medication)  
 
-# Select CBCL variables at baseline
-cbcl_t0 <- parent_cbcl %>%
-  filter(eventname == "baseline_year_1_arm_1") %>%
-  select(subjectkey, cbcl_tot_problems, cbcl_int_problems, cbcl_ext_problems, cbcl_dep_score, cbcl_anx_score, 
-         cbcl_somatic_score, cbcl_adhd_score, cbcl_odd_score, cbcl_conduct_score)
-
-# Select CBCL variables at 1-year follow-up
-cbcl_t1 <- parent_cbcl %>%
-  filter(eventname == "1_year_follow_up_y_arm_1") %>%
-  select(subjectkey, cbcl_tot_problems, cbcl_int_problems, cbcl_ext_problems, cbcl_dep_score, cbcl_anx_score, 
-         cbcl_somatic_score, cbcl_adhd_score, cbcl_odd_score, cbcl_conduct_score)
-
-# Select CBCL variables at 2-year follow-up
-cbcl_t2 <- parent_cbcl %>%
-  filter(eventname == "2_year_follow_up_y_arm_1") %>%
-  select(subjectkey, cbcl_tot_problems, cbcl_int_problems, cbcl_ext_problems, cbcl_dep_score, cbcl_anx_score, 
-         cbcl_somatic_score, cbcl_adhd_score, cbcl_odd_score, cbcl_conduct_score)
-
-# Rename KSADS variables
-ksad_parent <- ksad_parent %>%
-  rename(p_panic_present = ksads_5_857_p) %>%
-  rename(p_sepanx_present = ksads_7_861_p) %>%
-  rename(p_socanx_present = ksads_8_863_p) %>%
-  rename(p_genanx_present = ksads_10_869_p) %>%
-  rename(p_ocd_present = ksads_11_917_p) %>%
-  rename(p_odd_present = ksads_15_901_p) %>%
-  rename(p_conduct_present = ksads_16_897_p) 
-
-# Sum KSADS anxiety disorders into 'number of anxiety disorders' 
-ksad_parent <- ksad_parent %>%
-  mutate(anxiety_disorders = 
-           p_genanx_present + 
-           p_panic_present + 
-           p_sepanx_present + 
-           p_socanx_present + 
-           p_ocd_present) 
-
-# Recode 'number of anxiety disorders' into 'any anxiety disorder present' yes (1) or no (0)
-ksad_parent$anxiety_disorders[ksad_parent$anxiety_disorders == 0] <- 0
-ksad_parent$anxiety_disorders[ksad_parent$anxiety_disorders == 1] <- 1
-ksad_parent$anxiety_disorders[ksad_parent$anxiety_disorders == 2] <- 1
-ksad_parent$anxiety_disorders[ksad_parent$anxiety_disorders == 3] <- 1
-ksad_parent$anxiety_disorders[ksad_parent$anxiety_disorders == 4] <- 1
-ksad_parent$anxiety_disorders[ksad_parent$anxiety_disorders == 5] <- 1
+# Recode any mental health support at baseline as yes (1) or no (0)
+psyc_services_baseline$any_support[psyc_services_baseline$any_support == 0] <- 0
+psyc_services_baseline$any_support[psyc_services_baseline$any_support == 1] <- 1
+psyc_services_baseline$any_support[psyc_services_baseline$any_support == 3] <- 0
 
 # Set data type and level labels
-ksad_parent$anxiety_disorders <- factor(ksad_parent$anxiety_disorders, levels = c( 1,0), labels = c("Yes", "No" ))
+psyc_services_baseline$any_support <- factor(psyc_services_baseline$any_support, levels = c(1,0), labels = c("Yes", "No"))
 
-# Sum KSADS behavioural disorders into 'number of behavioural disorders' 
-ksad_parent <- ksad_parent %>%
-  mutate(behavioural_disorders = 
-           p_odd_present + 
-           p_conduct_present) 
-
-# Recode 'number of behavioural disorders' into 'any behavioural disorder present' yes (1) or no (0)
-ksad_parent$behavioural_disorders[ksad_parent$behavioural_disorders == 0] <- 0
-ksad_parent$behavioural_disorders[ksad_parent$behavioural_disorders == 1] <- 1
-ksad_parent$behavioural_disorders[ksad_parent$behavioural_disorders == 2] <- 1
+# Recode outpatient support at baseline as yes (1) or no (0)
+psyc_services_baseline$outpatient[psyc_services_baseline$outpatient == 0] <- 0
+psyc_services_baseline$outpatient[psyc_services_baseline$outpatient == 1] <- 1
+psyc_services_baseline$outpatient[psyc_services_baseline$outpatient == 3] <- 0
 
 # Set data type and level labels
-ksad_parent$behavioural_disorders <- factor(ksad_parent$behavioural_disorders, levels = c( 1,0), labels = c("Yes", "No" ))
+psyc_services_baseline$outpatient <- factor(psyc_services_baseline$outpatient, levels = c(1,0), labels = c("Yes", "No"))
 
-# Select KSAD variables at baseline
-ksad_parent_baseline <- ksad_parent %>%  
-  filter(eventname == 'baseline_year_1_arm_1') %>%
-  select(subjectkey, anxiety_disorders, behavioural_disorders)   
+# Recode inpatient support at baseline as yes (1) or no (0)
+psyc_services_baseline$inpatient[psyc_services_baseline$inpatient == 0] <- 0
+psyc_services_baseline$inpatient[psyc_services_baseline$inpatient == 1] <- 1
+psyc_services_baseline$inpatient[psyc_services_baseline$inpatient == 3] <- 0
 
-# Select KSAD variables at 2-year follow-up 
-ksad_parent_2_year <- ksad_parent %>%  
+# Set data type and level labels
+psyc_services_baseline$inpatient <- factor(psyc_services_baseline$inpatient, levels = c(1,0), labels = c("Yes", "No"))
+
+# Recode psychotherapy at baseline as yes (1) or no (0)
+psyc_services_baseline$psychotherapy[psyc_services_baseline$psychotherapy == 0] <- 0
+psyc_services_baseline$psychotherapy[psyc_services_baseline$psychotherapy == 1] <- 1
+psyc_services_baseline$psychotherapy[psyc_services_baseline$psychotherapy == 3] <- 0
+
+# Set data type and level labels
+psyc_services_baseline$psychotherapy <- factor(psyc_services_baseline$psychotherapy, levels = c(1,0), labels = c("Yes", "No"))
+
+# Recode medication for mental health at baseline as yes (1) or no (0)
+psyc_services_baseline$medication[psyc_services_baseline$medication == 0] <- 0
+psyc_services_baseline$medication[psyc_services_baseline$medication == 1] <- 1
+psyc_services_baseline$medication[psyc_services_baseline$medication == 3] <- 0
+
+# Set data type and level labels
+psyc_services_baseline$medication <- factor(psyc_services_baseline$medication, levels = c(1,0), labels = c("Yes", "No"))
+
+
+# Create overall psychotherapy and medication variable at baseline using psychotherapy and medication columns 
+psyc_services_baseline$psychotherapy_medication <- paste(psyc_services_baseline$psychotherapy, psyc_services_baseline$medication)
+
+# Recode injury type column 
+psyc_services_baseline$psychotherapy_medication [psyc_services_baseline$psychotherapy_medication  == 'No No'] <- 0
+psyc_services_baseline$psychotherapy_medication [psyc_services_baseline$psychotherapy_medication  == 'Yes No'] <- 1
+psyc_services_baseline$psychotherapy_medication [psyc_services_baseline$psychotherapy_medication  == 'No Yes'] <- 1
+psyc_services_baseline$psychotherapy_medication [psyc_services_baseline$psychotherapy_medication  == 'Yes Yes'] <- 1
+
+# Set data type and level labels
+psyc_services_baseline$psychotherapy_medication <- factor(psyc_services_baseline$psychotherapy_medication, levels = c(1,0), labels = c("Yes", "No"))
+
+
+# Create injury type variable at baseline using TBI severity and ortho injury columns 
+psyc_data$injury_type <- paste(psyc_data$tbi_severity, psyc_data$broken_bones)
+
+# Recode injury type column 
+psyc_data$injury_type[psyc_data$injury_type == 'No No'] <- 0
+psyc_data$injury_type[psyc_data$injury_type == 'Yes No'] <- 2
+psyc_data$injury_type[psyc_data$injury_type == 'No Yes'] <- 1
+psyc_data$injury_type[psyc_data$injury_type == 'Yes Yes'] <- 2
+
+# Set data type and level labels
+psyc_data$injury_type <- factor(psyc_data$injury_type, levels = c(2,1,0), labels = c("TBI", "Ortho", "None" ))
+
+# Rename and select psychiatric service use variables at 2-year follow-up 
+psyc_services_2_year <- psyc_services_long %>%
+  rename(any_support = kbi_p_c_mh_sa_l) %>%
+  rename(outpatient = kbipcserviceschecklistl1) %>%
+  rename(inpatient = kbipcserviceschecklistl3) %>%
+  rename(psychotherapy = kbipcserviceschecklistl7) %>%
+  rename(medication = kbipcserviceschecklistl8) %>%
   filter(eventname == '2_year_follow_up_y_arm_1') %>%
-  select(subjectkey, anxiety_disorders, behavioural_disorders)   
+  select(subjectkey, any_support,outpatient, inpatient, 
+         psychotherapy, medication)
+
+# Recode any mental health support at follow-up as yes (1) or no (0)
+psyc_services_2_year$any_support[psyc_services_2_year$any_support == 2] <- 0
+psyc_services_2_year$any_support[psyc_services_2_year$any_support == 1] <- 1
+psyc_services_2_year$any_support[psyc_services_2_year$any_support == 3] <- 0
+
+# Set data type and level labels
+psyc_services_2_year$any_support <- factor(psyc_services_2_year$any_support, levels = c(1,0), labels = c("Yes", "No"))
+
+# Recode outpatient support at follow-up as yes (1) or no (0)
+psyc_services_2_year$outpatient[psyc_services_2_year$outpatient == 0] <- 0
+psyc_services_2_year$outpatient[psyc_services_2_year$outpatient == 1] <- 1
+psyc_services_2_year$outpatient[psyc_services_2_year$outpatient == 3] <- 0
+
+# Set data type and level labels
+psyc_services_2_year$outpatient <- factor(psyc_services_2_year$outpatient, levels = c(1,0), labels = c("Yes", "No"))
+
+
+
+# Recode inpatient support at follow-up as yes (1) or no (0)
+psyc_services_2_year$inpatient[psyc_services_2_year$inpatient == 0] <- 0
+psyc_services_2_year$inpatient[psyc_services_2_year$inpatient == 1] <- 1
+psyc_services_2_year$inpatient[psyc_services_2_year$inpatient == 3] <- 0
+
+# Set data type and level labels
+psyc_services_2_year$inpatient <- factor(psyc_services_2_year$inpatient, levels = c(1,0), labels = c("Yes", "No"))
+
+
+# Recode psychotherapy at follow-up as yes (1) or no (0)
+psyc_services_2_year$psychotherapy[psyc_services_2_year$psychotherapy == 0] <- 0
+psyc_services_2_year$psychotherapy[psyc_services_2_year$psychotherapy == 1] <- 1
+psyc_services_2_year$psychotherapy[psyc_services_2_year$psychotherapy == 3] <- 0
+
+# Set data type and level labels
+psyc_services_2_year$psychotherapy <- factor(psyc_services_2_year$psychotherapy, levels = c(1,0), labels = c("Yes", "No"))
+
+
+# Recode medication for mental health at follow-up as yes (1) or no (0)
+psyc_services_2_year$medication[psyc_services_2_year$medication == 0] <- 0
+psyc_services_2_year$medication[psyc_services_2_year$medication == 1] <- 1
+psyc_services_2_year$medication[psyc_services_2_year$medication == 3] <- 0
+
+# Set data type and level labels
+psyc_services_2_year$medication <- factor(psyc_services_2_year$medication, levels = c(1,0), labels = c("Yes", "No"))
+
+# Create overall psychotherapy and medication variable at follow-up using psychotherapy and medication columns 
+psyc_services_2_year$psychotherapy_medication <- paste(psyc_services_2_year$psychotherapy, psyc_services_2_year$medication)
+
+# Recode injury type column 
+psyc_services_2_year$psychotherapy_medication [psyc_services_2_year$psychotherapy_medication  == 'No No'] <- 0
+psyc_services_2_year$psychotherapy_medication [psyc_services_2_year$psychotherapy_medication  == 'Yes No'] <- 1
+psyc_services_2_year$psychotherapy_medication [psyc_services_2_year$psychotherapy_medication  == 'No Yes'] <- 1
+psyc_services_2_year$psychotherapy_medication [psyc_services_2_year$psychotherapy_medication  == 'Yes Yes'] <- 1
+
+# Set data type and level labels
+psyc_services_2_year$psychotherapy_medication <- factor(psyc_services_2_year$psychotherapy_medication, levels = c(1,0), labels = c("Yes", "No"))
+
 
 # Rename and recode ethnicity 
 ethnicity <- ethnicity %>%
@@ -307,7 +363,6 @@ parent_demographics$household_income <- factor(parent_demographics$household_inc
                                                labels = c("[<50K]", "[>=50K & <100K]", "[>=100K]"))
 
 # Recode interview age to be measured in years not months 
-#
 # Interview age at baseline 
 tbi_baseline <- tbi_baseline %>% 
   mutate(interview_age = interview_age / 12)
@@ -317,16 +372,15 @@ tbi_2_year <- tbi_2_year %>%
   mutate(interview_age = interview_age / 12)
 
 # Recode sex 
-#
 # Set data type and level labels for baseline data
 tbi_baseline$sex <- factor(tbi_baseline$sex,
-                        levels = c("F", "M"), 
-                        labels = c("Female", "Male"))
+                           levels = c("F", "M"), 
+                           labels = c("Female", "Male"))
 
 # Set data type and level labels for 2-year follow-up data
 tbi_2_year$sex <- factor(tbi_2_year$sex,
-                           levels = c("F", "M"), 
-                           labels = c("Female", "Male"))
+                         levels = c("F", "M"), 
+                         labels = c("Female", "Male"))
 
 # Rename parent mental health 
 parent_mh <- parent_mh %>%
@@ -402,6 +456,7 @@ family_conflict_baseline <- family_conflict %>%
   filter(eventname == "baseline_year_1_arm_1") %>%
   select(subjectkey, family_conflict_scale)
 
+
 ###########################################################
 #
 # Merge datasets to create baseline and 2-year follow-up data
@@ -411,34 +466,30 @@ family_conflict_baseline <- family_conflict %>%
 # Merge baseline files
 psyc_data <- tbi_baseline %>%
   left_join(oi_baseline, by = "subjectkey") %>%
-  left_join(ksad_parent_baseline, by = "subjectkey") %>%
-  left_join(cbcl_t0, by = "subjectkey") %>%
+  left_join(psyc_services_baseline, by = "subjectkey") %>%
   left_join(ethnicity, by = "subjectkey") %>%
-  left_join(parent_mh, by = "subjectkey") %>%
   left_join(parent_demographics, by = "subjectkey") %>%
   left_join(site, by = "subjectkey") %>%
   left_join(advlife, by = "subjectkey") %>%
   left_join(neighbourhood_safety_baseline, by = "subjectkey") %>%
   left_join(family_conflict_baseline, by = "subjectkey") %>%
+  left_join(parent_mh, by = "subjectkey") %>%
   unique()
-
 
 # Merge 2-year follow-up files
 psyc_data_t2 <- tbi_1_year %>%
   left_join(tbi_2_year, by = "subjectkey") %>%
   left_join(oi_1_year, by = "subjectkey") %>%
   left_join(oi_2_year, by = "subjectkey") %>%
-  left_join(ksad_parent_2_year, by = "subjectkey") %>%
-  left_join(cbcl_t2, by = "subjectkey") %>%
+  left_join(psyc_services_2_year, by = "subjectkey") %>%
   left_join(ethnicity, by = "subjectkey") %>%
-  left_join(parent_mh, by = "subjectkey") %>%
+  left_join(parent_mh, by = "subjectkey") %>% 
   left_join(parent_demographics, by = "subjectkey") %>%
   left_join(site, by = "subjectkey") %>%
   left_join(advlife, by = "subjectkey") %>%
   left_join(neighbourhood_safety_baseline, by = "subjectkey") %>%
   left_join(family_conflict_baseline, by = "subjectkey") %>%
   unique()
-
 
 ##############################################################################
 #
@@ -459,7 +510,6 @@ psyc_data$injury_type[psyc_data$injury_type == 'Yes Yes'] <- 2
 psyc_data$injury_type <- factor(psyc_data$injury_type, levels = c(2,1,0), labels = c("TBI", "Ortho", "None" ))
 
 # Combine TBI cases from 1- and 2-year follow-up 
-#
 # Create column
 psyc_data_t2$tbi_both_years <- paste(psyc_data_t2$tbi_severity_1_year, psyc_data_t2$tbi_severity_2_year)
 
@@ -476,7 +526,6 @@ psyc_data_t2$tbi_both_years[psyc_data_t2$tbi_both_years == 'Yes Yes'] <- 1
 psyc_data_t2$tbi_both_years <- factor(psyc_data_t2$tbi_both_years, levels = c(1,0), labels = c("Yes", "No" ))
 
 # Combine ortho injury cases from 1- and 2-year follow-up 
-#
 # Create column
 psyc_data_t2$broken_bones_both_years <- paste(psyc_data_t2$broken_bones_1_year, psyc_data_t2$broken_bones_2_year)
 
@@ -519,20 +568,21 @@ psyc_data_t2$injury_type <- factor(psyc_data_t2$injury_type, levels = c(2, 1,0),
 label(psyc_data$interview_age) <- "Age"
 label(psyc_data$sex) <- "Sex"
 label(psyc_data$tbi_severity) <- "TBI"
+label(psyc_data$race_ethnicity) <- "Ethnicity"
+label(psyc_data$household_income) <- "Combined annual household income"
+label(psyc_data$safety) <- "Neighbourhood safety"
+label(psyc_data$family_conflict_scale) <- "Family conflict scale"
+label(psyc_data$advlife_cat) <- "Traumatic events"
 label(psyc_data$broken_bones) <- "Orthopaedic injury"
-label(psyc_data$anxiety_disorders) <- "Present anxiety disorders"
-label(psyc_data$behavioural_disorders) <- "Present behavioural disorders"
 label(psyc_data$parent_mh_score) <- "Parent mental health score"
-label(psyc_data$cbcl_anx_score) <- "Anxiety symptoms scale"
-label(psyc_data$cbcl_dep_score) <- "Depression symptoms scale"
-label(psyc_data$cbcl_adhd_score) <- "ADHD symptoms"
-label(psyc_data$cbcl_odd_score) <- "Oppositional defiant problems"
-label(psyc_data$cbcl_conduct_score) <- "Conduct problems"
-label(psyc_data$cbcl_int_problems) <- "Internalising symptoms scale"
-label(psyc_data$cbcl_ext_problems) <- "Externalising symptoms scale"
-label(psyc_data$cbcl_tot_problems) <- "Total problems scale"
+label(psyc_data$any_support) <- "Any mental health/sustance abuse services"
+label(psyc_data$outpatient) <- "Outpatient for mental health"
+label(psyc_data$inpatient) <- "Inpatient for mental health"
+label(psyc_data$psychotherapy) <- "Psychotherapy"
+label(psyc_data$medication) <- "Medication management"
+label(psyc_data$psychotherapy_medication) <- "Psychotherapy or medication management"
 
-# Create demographic and descriptive table for sample 
+# Create demographic and decriptive table for sample 
 descriptive_table <- psyc_data %>%
   select(injury_type, sex, interview_age, race_ethnicity, household_income, safety, family_conflict_scale, advlife_cat) %>%
   tbl_summary(by = injury_type, type = list(family_conflict_scale ~ 'categorical', advlife_cat ~ 'categorical')) %>%
@@ -544,30 +594,23 @@ descriptive_table <- psyc_data %>%
 # Save table
 table_1_filename = paste(output_dir, "descriptive_table.html", sep="")
 gt::gtsave(as_gt(descriptive_table), file = table_1_filename)
+display_html(file=table_1_filename)
 head(table_1_filename)
 
 # Rename 2-year follow-up variables for better readability 
-label(psyc_data_t2$household_income) <- "Household Income "
+label(psyc_data_t2$interview_age) <- "Age"
 label(psyc_data_t2$sex) <- "Sex"
+label(psyc_data_t2$household_income) <- "Household Income"
 label(psyc_data_t2$race_ethnicity) <- "Ethnicity"
-label(psyc_data_t2$interview_age) <- "Age at baseline"
+label(psyc_data_t2$any_support) <- "Any mental health/sustance abuse services"
+label(psyc_data_t2$outpatient) <- "Outpatient for mental health"
+label(psyc_data_t2$inpatient) <- "Inpatient for mental helth"
+label(psyc_data_t2$psychotherapy) <- "Psychotherapy"
+label(psyc_data_t2$medication) <- "Medication management"
 label(psyc_data_t2$advlife_cat) <- "Traumatic events"
 label(psyc_data_t2$safety) <- "Neighbourhood safety"
 label(psyc_data_t2$family_conflict_scale) <- "Family conflict scale"
-label(psyc_data_t2$parent_mh_score) <- "Parent mental health score"
-label(psyc_data_t2$tbi_both_years) <- "TBI"
-label(psyc_data_t2$anxiety_disorders) <- "Any present anxiety disorder"
-label(psyc_data_t2$behavioural_disorders) <- "Any present behavioural disorder"
-label(psyc_data_t2$cbcl_anx_score) <- "Anxiety symptoms scale"
-label(psyc_data_t2$cbcl_dep_score) <- "Depression symptoms scale"
-label(psyc_data_t2$cbcl_adhd_score) <- "ADHD symptoms"
-label(psyc_data_t2$cbcl_odd_score) <- "Oppositional defiant problems"
-label(psyc_data_t2$cbcl_conduct_score) <- "Conduct problems"
-label(psyc_data_t2$cbcl_int_problems) <- "Internalising symptoms scale"
-label(psyc_data_t2$cbcl_ext_problems) <- "Externalising symptoms scale"
-label(psyc_data_t2$cbcl_tot_problems) <- "Total problems scale"
-
-
+label(psyc_data_t2$psychotherapy_medication) <- "Psychotherapy or medication management"
 
 ##############################################################################
 #
@@ -577,6 +620,7 @@ label(psyc_data_t2$cbcl_tot_problems) <- "Total problems scale"
 
 # Impute baseline dataset
 #
+
 # Register process with doParallel 
 registerDoParallel()
 
@@ -588,32 +632,28 @@ class(psyc_data$site_id_l)
 psyc_data$site_id_l <- as.factor(psyc_data$site_id_l)
 
 # Select variables for imputed dataset 
-imputed_data <- select(psyc_data,
+imputed_data <- select(psyc_data, 
                        subjectkey,
                        interview_age, sex, race_ethnicity, parent_mh_score, household_income, advlife_cat, 
                        safety, family_conflict_scale, tbi_severity, broken_bones, site_id_l, injury_type,
-                       anxiety_disorders, behavioural_disorders, cbcl_anx_score, cbcl_dep_score,
-                       cbcl_adhd_score, cbcl_odd_score, cbcl_conduct_score, cbcl_int_problems,
-                       cbcl_ext_problems, cbcl_tot_problems)
+                       any_support, outpatient, inpatient, medication, psychotherapy, psychotherapy_medication)
 
 # Make sure subject ID is not imputed 
 imputed_data$subjectkey <- NULL 
 
-# Create imputed dataframe 
+# Create imputed DataFrame 
 imputed_data <- as.data.frame(imputed_data)
 
 # Visualise missing data 
 options(repr.plot.width = 10, repr.plot.height = 10, repr.plot.res = 200)
 vis_miss(imputed_data, sort_miss = TRUE, warn_large_data = FALSE)
-ggsave(paste(output_dir, "missing_psych_symptoms_1.png", sep = ""))
-
-         
-set.seed(123)
+ggsave(paste(output_dir, "missing_psych_service_1.png", sep = ""))
 
 # Record start time 
 start_time <- Sys.time() 
 
 # Impute covariates but not outcomes  
+set.seed(123)
 imputed_data_baseline <- missForest(imputed_data[c(1:12)])
 
 # Record end time 
@@ -627,13 +667,14 @@ imputed_data_baseline$OOBerror
 
 # Create data frame with imputed covariates and outcomes 
 imputed_data_baseline <- imputed_data_baseline$ximp 
-imputed_data_baseline <- data.frame(imputed_data[13:22], imputed_data_baseline)
+imputed_data_baseline <- data.frame(imputed_data[13:18], imputed_data_baseline)
 
 # Save new file for analyses 
-write.csv(imputed_data_baseline, paste(output_dir, "imputed_baseline_KSAD_CBCL.csv", sep = ""))
+write.csv(imputed_data_baseline, paste(output_dir, "imputed_baseline_psyc_services.csv", sep = ""))
 
 # Impute 2-year follow-up dataset
 #
+
 # Register process with doParallel 
 registerDoParallel()
 
@@ -646,30 +687,28 @@ psyc_data_t2$site_id_l <- as.factor (psyc_data_t2$site_id_l)
 
 # Select variables for imputed dataset 
 imputed_data_2 <- select(psyc_data_t2, 
-                         subjectkey,
-                         interview_age, sex, race_ethnicity, parent_mh_score, household_income, advlife_cat, 
-                         safety, family_conflict_scale, tbi_both_years, broken_bones_both_years, injury_type, site_id_l, 
-                         anxiety_disorders, behavioural_disorders, cbcl_anx_score, cbcl_dep_score,
-                         cbcl_adhd_score, cbcl_odd_score, cbcl_conduct_score, cbcl_int_problems,
-                         cbcl_ext_problems, cbcl_tot_problems)
+                       subjectkey,
+                       interview_age, sex, race_ethnicity, parent_mh_score, household_income, advlife_cat, 
+                       safety, family_conflict_scale, injury_type, site_id_l, tbi_both_years, 
+                       broken_bones_both_years,
+                       any_support, outpatient, inpatient, medication, psychotherapy, psychotherapy_medication)
 
 # Make sure subject ID is not imputed 
 imputed_data_2$subjectkey <- NULL 
 
-# Create imputed dataframe 
+# Create imputed DataFrame 
 imputed_data_2 <- as.data.frame(imputed_data_2)
 
 # Visualise missing data 
 options(repr.plot.width = 10, repr.plot.height = 10, repr.plot.res = 200)
 vis_miss(imputed_data_2, sort_miss = TRUE, warn_large_data = FALSE)
-ggsave(paste(output_dir, "missing_psych_symptoms_2.png", sep = ""))
-
-set.seed(123)
+ggsave(paste(output_dir, "missing_psych_service_2.png", sep = ""))
 
 # Record start time 
 start_time <- Sys.time() 
 
 # Impute covariates but not outcomes  
+set.seed(123)
 imputed_data_t2 <- missForest(imputed_data_2[c(1:12)])
 
 # Record end time 
@@ -683,777 +722,72 @@ imputed_data_t2$OOBerror
 
 # Create data frame with imputed covariates and outcomes  
 imputed_data_t2 <- imputed_data_t2$ximp 
-imputed_data_t2 <- data.frame(imputed_data_2[13:22], imputed_data_t2)
+imputed_data_t2 <- data.frame(imputed_data_2[13:18], imputed_data_t2)
 
 # Save new file for analyses 
-write.csv(imputed_data_t2, paste(output_dir, "imputed_t2_KSAD_CBCL.csv", sep = ""))
+write.csv(imputed_data_t2, paste(output_dir, "imputed_t2_psyc_services.csv", sep = ""))
 
 ##############################################################################
 #
 # Load imputed datasets to avoid running imputation again 
 #
-#############################################################################
+##############################################################################
 
 # Load imputed dataset for baseline 
-imputed_data_baseline <- read.csv(paste(output_dir, "imputed_baseline_KSAD_CBCL.csv", sep = ""))
+imputed_data_baseline <- read.csv(paste(output_dir, "imputed_baseline_psyc_services.csv", sep = ""))
 
 # Load imputed dataset for 2-year follow-up 
-imputed_data_t2 <- read.csv(paste(output_dir, "imputed_t2_KSAD_CBCL.csv", sep = ""))
+imputed_data_t2 <- read.csv(paste(output_dir, "imputed_t2_psyc_services.csv", sep = ""))
 
 ##############################################################################
 #
-# Complete statistical analyses
+# Psychiatric service use 
 #
-# Mixed-effects models with study site as a random effect 
 # Adjusted model 1 covariates are age, sex, ethnicity and household income
-# Adjusted model 2 covariates are adverse life event, neighbourhood safety, 
+# Adjusted model 2 covariates are adverse life event, neighbourhood safety,
 #  parent mental health and family conflict 
-#
+# 
 #############################################################################
-
-#
-# KSADS-5 analyses 
-#
 
 # Baseline
-#
-
-# Ensure baseline variables are stored as factors
-imputed_data_baseline$sex <- as.factor(imputed_data_baseline$sex)
+# Ensure variables are stored as factors 
+imputed_data_baseline$any_support <- as.factor(imputed_data_baseline$any_support)
+imputed_data_baseline$outpatient <- as.factor(imputed_data_baseline$outpatient)
+imputed_data_baseline$inpatient <- as.factor(imputed_data_baseline$inpatient)
+imputed_data_baseline$psychotherapy <- as.factor(imputed_data_baseline$psychotherapy)
+imputed_data_baseline$medication <- as.factor(imputed_data_baseline$medication)
 imputed_data_baseline$injury_type <- as.factor(imputed_data_baseline$injury_type)
-imputed_data_baseline$anxiety_disorders <- as.factor(imputed_data_baseline$anxiety_disorders)
-imputed_data_baseline$behavioural_disorders <- as.factor(imputed_data_baseline$behavioural_disorders)
+imputed_data_baseline$psychotherapy_medication <- as.factor(imputed_data_baseline$psychotherapy_medication)
 
-# Any present anxiety disorder at baseline
+# Any mental health support measured at baseline
 #
 
-# Change reference categories 
-imputed_data_baseline$injury_type <- factor(imputed_data_baseline$injury_type, 
-                                            levels = c("TBI", "Ortho", "None"))
-
-imputed_data_baseline$anxiety_disorders <- relevel(imputed_data_baseline$anxiety_disorders, ref = "No")
+# Change reference category 
+imputed_data_baseline$any_support <- relevel(imputed_data_baseline$any_support, ref = "No")
 imputed_data_baseline$injury_type <- relevel(imputed_data_baseline$injury_type, ref = "None")
 
 # Run unadjusted model 
-anxiety_disorders_model_unadjusted <- glmer(anxiety_disorders ~ injury_type +
-                                              (1|site_id_l),
-                                            data = imputed_data_baseline,
-                                            family = binomial(link = "logit"),
-                                            control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
-)
-
-# Run adjusted model 1
-anxiety_disorders_model_adjusted1 <- glmer(anxiety_disorders ~ injury_type +
-                                             interview_age +
-                                             sex +
-                                             race_ethnicity +
-                                             household_income +
-                                             (1|site_id_l),
-                                           data = imputed_data_baseline,
-                                           family = binomial(link = "logit"),
-                                           control = glmerControl(optimizer="bobyqa",optCtrl=list(maxfun=10000000))
-)
-
-# Run adjusted model 2
-anxiety_disorders_model_adjusted2 <- glmer(anxiety_disorders ~ injury_type +
-                                             interview_age +
-                                             sex +
-                                             race_ethnicity +
-                                             household_income +
-                                             advlife_cat +
-                                             safety +
-                                             family_conflict_scale +
-                                             parent_mh_score +
-                                             (1|site_id_l),
-                                           data = imputed_data_baseline,
-                                           family = binomial(link = "logit"),
-                                           control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-
-# Any present behavioural disorder at baseline
-#
-
-# Change reference categories 
-imputed_data_baseline$behavioural_disorders <- relevel(imputed_data_baseline$behavioural_disorders, ref = "No")
-imputed_data_baseline$injury_type <- relevel(imputed_data_baseline$injury_type, ref = "None")
-
-# Run unadjusted model
-behavioural_disorders_model_unadjusted <- glmer(behavioural_disorders ~ injury_type +
-                                                  (1|site_id_l),
-                                                data = imputed_data_baseline,
-                                                family = binomial(link = "logit"),
-                                                control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
-)
-
-
-
-# Run adjusted model 1
-behavioural_disorders_model_adjusted1 <- glmer(behavioural_disorders ~ injury_type +
-                                                 interview_age +
-                                                 sex +
-                                                 race_ethnicity +
-                                                 household_income +
-                                                 (1|site_id_l),
-                                               data = imputed_data_baseline,
-                                               family = binomial(link = "logit"),
-                                               control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-# Run adjusted model 2
-behavioural_disorders_model_adjusted2 <- glmer(behavioural_disorders ~ injury_type +
-                                                 interview_age +
-                                                 sex +
-                                                 race_ethnicity +
-                                                 household_income +
-                                                 advlife_cat +
-                                                 safety +
-                                                 family_conflict_scale +
-                                                 parent_mh_score +
-                                                 (1|site_id_l),
-                                               data = imputed_data_baseline,
-                                               family = binomial(link = "logit"),
-                                               control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-#
-# KSADS-5 2-year follow-up
-#
-
-# Check variables are stored as factors 
-imputed_data_t2$sex <- as.factor(imputed_data_t2$sex)
-imputed_data_t2$injury_type <- as.factor(imputed_data_t2$injury_type)
-imputed_data_t2$anxiety_disorders <- as.factor(imputed_data_t2$anxiety_disorders)
-imputed_data_t2$behavioural_disorders <- as.factor(imputed_data_t2$behavioural_disorders)
-imputed_data_t2$injury_type <- factor(imputed_data_t2$injury_type, 
-                                            levels = c("TBI", "Ortho", "None"))
-
-# Any present anxiety disorder at 2-year follow-up 
-#
-
-# Change reference categories 
-imputed_data_t2$anxiety_disorders <- relevel(imputed_data_t2$anxiety_disorders, ref = "No")
-imputed_data_t2$injury_type <- relevel(imputed_data_t2$injury_type, ref = "None")
-
-# Run unadjusted model 
-anxiety_disorders_model_unadjusted_t2 <- glmer(anxiety_disorders ~ injury_type +
-                                              (1|site_id_l),
-                                            data = imputed_data_t2,
-                                            family = binomial(link = "logit"),
-                                            control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
-)
-
-# Run adjusted model 1
-anxiety_disorders_model_adjusted1_t2 <- glmer(anxiety_disorders ~ injury_type +
-                                             interview_age +
-                                             sex +
-                                             race_ethnicity +
-                                             household_income +
-                                             (1|site_id_l),
-                                           data = imputed_data_t2,
-                                           family = binomial(link = "logit"),
-                                           control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-# Run adjusted model 2
-anxiety_disorders_model_adjusted2_t2 <- glmer(anxiety_disorders ~ injury_type +
-                                             interview_age +
-                                             sex +
-                                             race_ethnicity +
-                                             household_income +
-                                             advlife_cat +
-                                             safety +
-                                             family_conflict_scale +
-                                             parent_mh_score +
-                                             (1|site_id_l),
-                                           data = imputed_data_t2,
-                                           family = binomial(link = "logit"),
-                                           control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-# Any present behavioural disorder at 2-year follow-up
-#
-
-# Change reference categories 
-imputed_data_t2$behavioural_disorders <- relevel(imputed_data_t2$behavioural_disorders, ref = "No")
-
-# Run unadjusted model 
-behavioural_disorders_model_unadjusted_t2 <- glmer(behavioural_disorders ~ injury_type +
-                                                  (1|site_id_l),
-                                                data = imputed_data_t2, family = binomial(link = "logit"),
-                                                control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
-)
-
-# Run adjusted model 1
-behavioural_disorders_model_adjusted1_t2 <- glmer(behavioural_disorders ~ injury_type +
-                                                 interview_age +
-                                                 sex +
-                                                 race_ethnicity +
-                                                 household_income +
-                                                 (1|site_id_l),
-                                               data = imputed_data_t2,
-                                               family = binomial(link = "logit"),
-                                               control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-# Run adjusted model 2
-behavioural_disorders_model_adjusted2_t2 <- glmer(behavioural_disorders ~ injury_type +
-                                                 interview_age +
-                                                 sex +
-                                                 race_ethnicity +
-                                                 household_income +
-                                                 advlife_cat +
-                                                 safety +
-                                                 family_conflict_scale +
-                                                 parent_mh_score + 
-                                                 (1|site_id_l),
-                                               data = imputed_data_t2,
-                                               family = binomial(link = "logit"),
-                                               control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-##############################################################################
-#
-# CBCL internalising, externalising and total symptoms score analyses 
-#
-#############################################################################
-
-# Internalising symptoms score at baseline
-#
-
-# Run unadjusted model 
-cbcl_int_symptoms_model_unadjusted <- lmer(cbcl_int_problems ~ injury_type +
-                                             (1|site_id_l),
-                                           data = imputed_data_baseline
-)
-
-# Run adjusted model 1
-cbcl_int_symptoms_model_adjusted1 <- lmer(cbcl_int_problems ~ injury_type +
-                                            interview_age +
-                                            sex +
-                                            race_ethnicity +
-                                            household_income +
-                                            (1|site_id_l),
-                                          data = imputed_data_baseline, 
-                                          control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-# Run adjusted model 2
-cbcl_int_symptoms_model_adjusted2 <- lmer(cbcl_int_problems ~ injury_type +
-                                            interview_age +
-                                            sex +
-                                            race_ethnicity +
-                                            household_income +
-                                            advlife_cat +
-                                            safety +
-                                            family_conflict_scale +
-                                            parent_mh_score +
-                                            (1|site_id_l),
-                                          data = imputed_data_baseline, 
-                                          control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-# Externalising symptoms score at baseline
-#
-
-# Run unadjusted model 
-cbcl_ext_symptoms_model_unadjusted <- lmer(cbcl_ext_problems ~ injury_type +
-                                             (1|site_id_l),
-                                           data = imputed_data_baseline
-)
-
-
-# Run adjusted model 1
-cbcl_ext_symptoms_model_adjusted1 <- lmer(cbcl_ext_problems ~ injury_type + 
-                                            interview_age + 
-                                            sex + 
-                                            race_ethnicity + 
-                                            household_income +
-                                            (1|site_id_l),
-                                          data = imputed_data_baseline, 
-                                          control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-
-
-# Run adjusted model 2
-cbcl_ext_symptoms_model_adjusted2 <- lmer(cbcl_ext_problems ~ injury_type +
-                                            interview_age +
-                                            sex +
-                                            race_ethnicity +
-                                            household_income +
-                                            advlife_cat +
-                                            safety +
-                                            family_conflict_scale +
-                                            parent_mh_score +
-                                            (1|site_id_l),
-                                          data = imputed_data_baseline, 
-                                          control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-# Total problems score at baseline 
-#
-
-# Run unadjusted model 
-cbcl_tot_symptoms_model_unadjusted <- lmer(cbcl_tot_problems ~ injury_type +
-                                             (1|site_id_l),
-                                           data = imputed_data_baseline
-                                           
-)
-
-# Run adjusted model 1
-cbcl_tot_symptoms_model_adjusted1 <- lmer(cbcl_tot_problems ~ injury_type +
-                                            interview_age +
-                                            sex +
-                                            race_ethnicity +
-                                            household_income +
-                                            (1|site_id_l),
-                                          data = imputed_data_baseline, 
-                                          control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-# Run adjusted model 2
-cbcl_tot_symptoms_model_adjusted2 <- lmer(cbcl_tot_problems ~ injury_type +
-                                            interview_age +
-                                            sex +
-                                            race_ethnicity +
-                                            household_income +
-                                            advlife_cat +
-                                            safety +
-                                            family_conflict_scale +
-                                            parent_mh_score +
-                                            (1|site_id_l),
-                                          data = imputed_data_baseline, 
-                                          control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-
-# Internalising symptoms score at 2-year follow-up
-#
-
-# Run unadjusted model 
-cbcl_int_symptoms_model_unadjusted_t2 <- lmer(cbcl_int_problems ~ injury_type +
-                                             (1|site_id_l),
-                                           data = imputed_data_t2
-)
-
-# Run adjusted model 1
-cbcl_int_symptoms_model_adjusted1_t2 <- lmer(cbcl_int_problems ~ injury_type +
-                                            interview_age +
-                                            sex +
-                                            race_ethnicity +
-                                            household_income +
-                                            (1|site_id_l),
-                                          data = imputed_data_t2, 
-                                          control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-# Run adjusted model 2
-cbcl_int_symptoms_model_adjusted2_t2 <- lmer(cbcl_int_problems ~ injury_type +
-                                            interview_age +
-                                            sex +
-                                            race_ethnicity +
-                                            household_income +
-                                            advlife_cat +
-                                            safety +
-                                            family_conflict_scale +
-                                            parent_mh_score +
-                                            (1|site_id_l),
-                                          data = imputed_data_t2, 
-                                          control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-# Externalising symptoms score at 2-year follow-up
-#
-
-# Run unadjusted model 
-cbcl_ext_symptoms_model_unadjusted_t2 <- lmer(cbcl_ext_problems ~ injury_type +
-                                             (1|site_id_l),
-                                           data = imputed_data_t2
-)
-
-# Run adjusted model 1
-cbcl_ext_symptoms_model_adjusted1_t2 <- lmer(cbcl_ext_problems ~ injury_type +
-                                            interview_age +
-                                            sex +
-                                            race_ethnicity +
-                                            household_income +
-                                            (1|site_id_l),
-                                          data = imputed_data_t2, 
-                                          control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-# Run adjusted model 2
-cbcl_ext_symptoms_model_adjusted2_t2 <- lmer(cbcl_ext_problems ~ injury_type +
-                                            interview_age +
-                                            sex +
-                                            race_ethnicity +
-                                            household_income +
-                                            advlife_cat +
-                                            safety +
-                                            family_conflict_scale +
-                                            parent_mh_score +
-                                            (1|site_id_l),
-                                          data = imputed_data_t2, 
-                                          control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-
-# Total problems score at 2-year follow-up
-#
-
-# Run unadjusted model 
-cbcl_tot_symptoms_model_unadjusted_t2 <- lmer(cbcl_tot_problems ~ injury_type +
-                                             (1|site_id_l),
-                                           data = imputed_data_t2
-)
-
-# Run adjusted model 1
-cbcl_tot_symptoms_model_adjusted1_t2 <- lmer(cbcl_tot_problems ~ injury_type +
-                                            interview_age +
-                                            sex +
-                                            race_ethnicity +
-                                            household_income +
-                                            (1|site_id_l),
-                                          data = imputed_data_t2, 
-                                          control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-# Run adjusted model 2
-cbcl_tot_symptoms_model_adjusted2_t2 <- lmer(cbcl_tot_problems ~ injury_type +
-                                            interview_age +
-                                            sex +
-                                            race_ethnicity +
-                                            household_income +
-                                            advlife_cat +
-                                            safety +
-                                            family_conflict_scale +
-                                            parent_mh_score + 
-                                            (1|site_id_l),
-                                          data = imputed_data_t2, 
-                                          control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-
-##############################################################################
-#
-# CBCL symptom subscale analyses 
-#
-#############################################################################
-
-# Anxiety symptoms at baseline
-#
-
-# Run unadjusted model 
-anxiety_symptoms_model_unadjusted <- lmer(cbcl_anx_score ~ injury_type +
-                                            (1|site_id_l),
-                                          data = imputed_data_baseline,
-                                          control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
-)
-
-# Run adjusted model 1
-anxiety_symptoms_model_adjusted1 <- lmer(cbcl_anx_score ~ injury_type +
-                                           interview_age +
-                                           sex +
-                                           race_ethnicity +
-                                           household_income +
-                                           (1|site_id_l),
-                                         data = imputed_data_baseline, 
-                                         control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-# Run adjusted model 2
-anxiety_symptoms_model_adjusted2 <- lmer(cbcl_anx_score ~ injury_type +
-                                           interview_age +
-                                           sex +
-                                           race_ethnicity +
-                                           household_income +
-                                           advlife_cat +
-                                           safety +
-                                           family_conflict_scale +
-                                           parent_mh_score +
-                                           (1|site_id_l),
-                                         data = imputed_data_baseline, 
-                                         control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-# Depression symptoms at baseline
-#
-
-# Run unadjusted model 
-depression_symptoms_model_unadjusted <- lmer(cbcl_dep_score ~ injury_type +
-                                               (1|site_id_l),
-                                             data = imputed_data_baseline,
-                                             control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
-)
-
-# Run adjusted model 1
-depression_symptoms_model_adjusted1 <- lmer(cbcl_dep_score ~ injury_type +
-                                              interview_age +
-                                              sex +
-                                              race_ethnicity +
-                                              household_income +
-                                              (1|site_id_l),
-                                            data = imputed_data_baseline, 
-                                            control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-# Run adjusted model 2
-depression_symptoms_model_adjusted2 <- lmer(cbcl_dep_score ~ injury_type +
-                                              interview_age +
-                                              sex +
-                                              race_ethnicity +
-                                              household_income +
-                                              advlife_cat +
-                                              safety +
-                                              family_conflict_scale +
-                                              parent_mh_score +
-                                              (1|site_id_l),
-                                            data = imputed_data_baseline, 
-                                            control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-# ADHD symptoms at baseline
-#
-
-# Run unadjusted model 
-adhd_symptoms_model_unadjusted <- lmer(cbcl_adhd_score ~ injury_type +
-                                         (1|site_id_l),
-                                       data = imputed_data_baseline,
-                                       control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
-)
-
-# Run adjusted model 1
-adhd_symptoms_model_adjusted1 <- lmer(cbcl_adhd_score ~ injury_type +
-                                        interview_age +
-                                        sex +
-                                        race_ethnicity +
-                                        household_income +
+any_support_model_unadjusted <- glmer(any_support ~ injury_type +
                                         (1|site_id_l),
-                                      data = imputed_data_baseline, 
-                                      control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-# Run adjusted model 2
-adhd_symptoms_model_adjusted2 <- lmer(cbcl_adhd_score ~ injury_type +
-                                        interview_age +
-                                        sex +
-                                        race_ethnicity +
-                                        household_income +
-                                        advlife_cat +
-                                        safety +
-                                        family_conflict_scale +
-                                        parent_mh_score +
-                                        (1|site_id_l),
-                                      data = imputed_data_baseline, 
-                                      control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-# ODD symptoms at baseline
-#
-
-# Run unadjusted model 
-odd_symptoms_model_unadjusted <- lmer(cbcl_odd_score ~ injury_type +
-                                        (1|site_id_l),
-                                      data = imputed_data_baseline,
-                                      control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
+                                      data = imputed_data_baseline, family = binomial(),
+                                      control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
 )
 
 # Run adjusted model 1
-odd_symptoms_model_adjusted1 <- lmer(cbcl_odd_score ~ injury_type +
+any_support_model_adjusted1 <- glmer(any_support ~ injury_type +
                                        interview_age +
                                        sex +
                                        race_ethnicity +
                                        household_income +
                                        (1|site_id_l),
-                                     data = imputed_data_baseline, 
-                                     control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
+                                     data = imputed_data_baseline,
+                                     family = binomial(link = "logit"),
+                                     control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
 )
+
 
 # Run adjusted model 2
-odd_symptoms_model_adjusted2 <- lmer(cbcl_odd_score ~ injury_type +
-                                       interview_age +
-                                       sex +
-                                       race_ethnicity +
-                                       household_income +
-                                       advlife_cat +
-                                       safety +
-                                       family_conflict_scale +
-                                       parent_mh_score + 
-                                       (1|site_id_l),
-                                     data = imputed_data_baseline, 
-                                     control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-# Conduct symptoms at baseline
-#
-
-# Run unadjusted model 
-conduct_symptoms_model_unadjusted <- lmer(cbcl_conduct_score ~ injury_type +
-                                            (1|site_id_l),
-                                          data = imputed_data_baseline
-)
-
-# Run adjusted model 1
-conduct_symptoms_model_adjusted1 <- lmer(cbcl_conduct_score ~ injury_type +
-                                           interview_age +
-                                           sex +
-                                           race_ethnicity +
-                                           household_income +
-                                           (1|site_id_l),
-                                         data = imputed_data_baseline, 
-                                         control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-# Run adjusted model 2
-conduct_symptoms_model_adjusted2 <- lmer(cbcl_conduct_score ~ injury_type +
-                                           interview_age +
-                                           sex +
-                                           race_ethnicity +
-                                           household_income +
-                                           advlife_cat +
-                                           safety +
-                                           family_conflict_scale +
-                                           parent_mh_score +
-                                           (1|site_id_l),
-                                         data = imputed_data_baseline, 
-                                         control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-#
-# CBCL symptom subscales at 2-year follow-up
-#
-
-# Anxiety symptoms at 2-year follow-up
-#
-# Run unadjusted model 
-anxiety_symptoms_model_unadjusted_t2 <- lmer(cbcl_anx_score ~ injury_type +
-                                            (1|site_id_l),
-                                          data = imputed_data_t2,
-                                          control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
-)
-
-# Run adjusted model 1
-anxiety_symptoms_model_adjusted1_t2 <- lmer(cbcl_anx_score ~ injury_type +
-                                           interview_age +
-                                           sex +
-                                           race_ethnicity +
-                                           household_income +
-                                           (1|site_id_l),
-                                         data = imputed_data_t2, 
-                                         control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-# Run adjusted model 2
-anxiety_symptoms_model_adjusted2_t2 <- lmer(cbcl_anx_score ~ injury_type +
-                                           interview_age +
-                                           sex +
-                                           race_ethnicity +
-                                           household_income +
-                                           advlife_cat +
-                                           safety +
-                                           family_conflict_scale +
-                                           parent_mh_score +
-                                           (1|site_id_l),
-                                         data = imputed_data_t2, 
-                                         control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-# Depression symptoms at 2-year follow-up
-#
-
-# Run unadjusted model 
-depression_symptoms_model_unadjusted_t2 <- lmer(cbcl_dep_score ~ injury_type +
-                                               (1|site_id_l),
-                                             data = imputed_data_t2,
-                                             control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
-)
-
-# Run adjusted model 1
-depression_symptoms_model_adjusted1_t2 <- lmer(cbcl_dep_score ~ injury_type +
-                                              interview_age +
-                                              sex +
-                                              race_ethnicity +
-                                              household_income +
-                                              (1|site_id_l),
-                                            data = imputed_data_t2, 
-                                            control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-# Run adjusted model 2
-depression_symptoms_model_adjusted2_t2 <- lmer(cbcl_dep_score ~ injury_type +
-                                              interview_age +
-                                              sex +
-                                              race_ethnicity +
-                                              household_income +
-                                              advlife_cat +
-                                              safety +
-                                              family_conflict_scale +
-                                              parent_mh_score +
-                                              (1|site_id_l),
-                                            data = imputed_data_t2, 
-                                            control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-# ADHD symptoms at 2-year follow-up
-#
-
-# Run unadjusted model 
-adhd_symptoms_model_unadjusted_t2 <- lmer(cbcl_adhd_score ~ injury_type +
-                                         (1|site_id_l),
-                                       data = imputed_data_t2,
-                                       control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
-)
-
-# Run adjusted model 1
-adhd_symptoms_model_adjusted1_t2 <- lmer(cbcl_adhd_score ~ injury_type +
-                                        interview_age +
-                                        sex +
-                                        race_ethnicity +
-                                        household_income +
-                                        (1|site_id_l),
-                                      data = imputed_data_t2, 
-                                      control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-# Run adjusted model 2
-adhd_symptoms_model_adjusted2_t2 <- lmer(cbcl_adhd_score ~ injury_type +
-                                        interview_age +
-                                        sex +
-                                        race_ethnicity +
-                                        household_income +
-                                        advlife_cat +
-                                        safety +
-                                        family_conflict_scale +
-                                        parent_mh_score + 
-                                        (1|site_id_l),
-                                      data = imputed_data_t2, 
-                                      control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-# ODD symptoms at 2-year follow-up
-#
-
-# Run unadjusted model 
-odd_symptoms_model_unadjusted_t2 <- lmer(cbcl_odd_score ~ injury_type +
-                                        (1|site_id_l),
-                                      data = imputed_data_t2,
-                                      control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
-)
-
-# Run adjusted model 1
-odd_symptoms_model_adjusted1_t2 <- lmer(cbcl_odd_score ~ injury_type +
-                                       interview_age +
-                                       sex +
-                                       race_ethnicity +
-                                       household_income +
-                                       (1|site_id_l),
-                                     data = imputed_data_t2, 
-                                     control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
-)
-
-# Run adjusted model 2
-odd_symptoms_model_adjusted2_t2 <- lmer(cbcl_odd_score ~ injury_type +
+any_support_model_adjusted2 <- glmer(any_support ~ injury_type +
                                        interview_age +
                                        sex +
                                        race_ethnicity +
@@ -1463,804 +797,839 @@ odd_symptoms_model_adjusted2_t2 <- lmer(cbcl_odd_score ~ injury_type +
                                        family_conflict_scale +
                                        parent_mh_score +
                                        (1|site_id_l),
-                                     data = imputed_data_t2, 
-                                     control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
+                                     data = imputed_data_baseline,
+                                     family = binomial(link = "logit"),
+                                     control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
 )
 
-# Conduct symptoms at 2-year follow-up
-#
+# Psychotherapy measured at baseline
+
+# Change reference category
+imputed_data_baseline$psychotherapy <- relevel(imputed_data_baseline$psychotherapy, ref = "No")
 
 # Run unadjusted model 
-conduct_symptoms_model_unadjusted_t2 <- lmer(cbcl_conduct_score ~ injury_type +
-                                            (1|site_id_l),
-                                          data = imputed_data_t2
+imputed_data_baseline$psychotherapy <- as.factor(imputed_data_baseline$psychotherapy)
+
+
+psychotherapy_model_unadjusted <- glmer(psychotherapy ~ injury_type + 
+                                          (1|site_id_l),
+                                        data = imputed_data_baseline,
+                                        family = binomial(link = "logit"),
+                                        control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
 )
 
 # Run adjusted model 1
-conduct_symptoms_model_adjusted1_t2 <- lmer(cbcl_conduct_score ~ injury_type +
-                                           interview_age +
-                                           sex +
-                                           race_ethnicity +
-                                           household_income +
-                                           (1|site_id_l),
-                                         data = imputed_data_t2, 
-                                         control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
+psychotherapy_model_adjusted1 <- glmer(psychotherapy ~ injury_type +
+                                         interview_age +
+                                         sex +
+                                         race_ethnicity +
+                                         household_income + 
+                                         (1|site_id_l),
+                                       data = imputed_data_baseline,
+                                       family = binomial(link = "logit"),
+                                       control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
+)
+
+
+
+# Run adjusted model 2
+psychotherapy_model_adjusted2 <- glmer(psychotherapy ~ injury_type +
+                                         interview_age +
+                                         sex +
+                                         race_ethnicity +
+                                         household_income + 
+                                         advlife_cat +
+                                         safety +
+                                         family_conflict_scale +
+                                         parent_mh_score +
+                                         (1|site_id_l),
+                                       data = imputed_data_baseline,
+                                       family = binomial(link = "logit"),
+                                       control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
+)
+
+# Medication for mental health measured at baseline
+#
+
+# Change reference category
+imputed_data_baseline$medication <- relevel(imputed_data_baseline$medication, ref = "No")
+
+# Run unadjusted model 
+medication_model_unadjusted <- glmer(medication ~ injury_type + 
+                                       (1|site_id_l),
+                                     data = imputed_data_baseline,
+                                     family = binomial(link = "logit"),
+                                     control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
+)
+
+# Run adjusted model 1
+medication_model_adjusted1 <- glmer(medication ~ injury_type +
+                                      interview_age +
+                                      sex +
+                                      race_ethnicity +
+                                      household_income + 
+                                      (1|site_id_l),
+                                    data = imputed_data_baseline, family = binomial(link = "logit"),
+                                    control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
 )
 
 # Run adjusted model 2
-conduct_symptoms_model_adjusted2_t2 <- lmer(cbcl_conduct_score ~ injury_type +
-                                           interview_age +
-                                           sex +
-                                           race_ethnicity +
-                                           household_income +
-                                           advlife_cat +
-                                           safety +
-                                           family_conflict_scale +
-                                           parent_mh_score + 
-                                           (1|site_id_l),
-                                         data = imputed_data_t2, 
-                                         control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
+medication_model_adjusted2 <- glmer(medication ~ injury_type +
+                                      interview_age +
+                                      sex +
+                                      race_ethnicity +
+                                      household_income + 
+                                      advlife_cat +
+                                      safety +
+                                      family_conflict_scale +
+                                      parent_mh_score +
+                                      (1|site_id_l),
+                                    data = imputed_data_baseline,
+                                    family = binomial(link = "logit"),
+                                    control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
 )
 
 
+# Psychotherapy and mmedication for mental health measured at baseline
+#
+
+# Change reference category
+imputed_data_baseline$psychotherapy_medication <- relevel(imputed_data_baseline$psychotherapy_medication, ref = "No")
+
+# Run unadjusted model 
+psychotherapy_medication_model_unadjusted <- glmer(psychotherapy_medication ~ injury_type + 
+                                       (1|site_id_l),
+                                     data = imputed_data_baseline,
+                                     family = binomial(link = "logit"),
+                                     control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
+)
+
+# Run adjusted model 1
+psychotherapy_medication_model_adjusted1 <- glmer(psychotherapy_medication ~ injury_type +
+                                      interview_age +
+                                      sex +
+                                      race_ethnicity +
+                                      household_income + 
+                                      (1|site_id_l),
+                                    data = imputed_data_baseline, family = binomial(link = "logit"),
+                                    control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
+)
+
+# Run adjusted model 2
+psychotherapy_medication_model_adjusted2 <- glmer(psychotherapy_medication ~ injury_type +
+                                      interview_age +
+                                      sex +
+                                      race_ethnicity +
+                                      household_income + 
+                                      advlife_cat +
+                                      safety +
+                                      family_conflict_scale +
+                                      parent_mh_score +
+                                      (1|site_id_l),
+                                    data = imputed_data_baseline,
+                                    family = binomial(link = "logit"),
+                                    control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
+)
+
+
+# Outpatient support measured at baseline
+#
+
+# Change reference category
+imputed_data_baseline$outpatient <- relevel(imputed_data_baseline$outpatient, ref = "No")
+
+# Run unadjusted model 
+outpatient_model_unadjusted <- glmer(outpatient ~ injury_type +
+                                        (1|site_id_l),
+                                     data = imputed_data_baseline,
+                                     family = binomial(),
+                                     control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
+)
+
+# View model values
+summary(outpatient_model_unadjusted)
+
+# Run adjusted model 1
+outpatient_model_adjusted1 <- glmer(outpatient ~ injury_type +
+                                      interview_age +
+                                      sex +
+                                      race_ethnicity +
+                                      household_income +
+                                      (1|site_id_l),
+                                     data = imputed_data_baseline,
+                                    family = binomial(link = "logit"),
+                                    control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
+)
+
+# View model values
+summary(outpatient_model_adjusted1)
+
+# Run adjusted model 2
+outpatient_model_adjusted2 <- glmer(outpatient ~ injury_type +
+                                      interview_age +
+                                      sex +
+                                      race_ethnicity +
+                                      household_income +
+                                      advlife_cat +
+                                      safety +
+                                      family_conflict_scale +
+                                      parent_mh_score +
+                                      (1|site_id_l),
+                                    data = imputed_data_baseline, family = binomial(link = "logit"),
+                                    control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
+)
+
+# View model values
+summary(outpatient_model_adjusted2)
+
+# Inpatient support measured at baseline
+#
+
+# Change reference category
+imputed_data_baseline$inpatient <- relevel(imputed_data_baseline$inpatient, ref = "No")
+
+# Run unadjusted model 
+inpatient_model_unadjusted <- glmer(inpatient ~ injury_type +
+                                       (1|site_id_l),
+                                     data = imputed_data_baseline, family = binomial(),
+                                     control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
+)
+
+# View model values
+summary(inpatient_model_unadjusted)
+
+# Run adjusted model 1
+inpatient_model_adjusted1 <- glmer(inpatient ~ injury_type +
+                                     interview_age +
+                                     sex +
+                                     race_ethnicity +
+                                     household_income +
+                                     (1|site_id_l),
+                                   data = imputed_data_baseline, family = binomial(link = "logit"),
+                                   control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
+)
+
+# View model values
+summary(inpatient_model_adjusted1)
+
+# Run adjusted model 2
+inpatient_model_adjusted2 <- glmer(inpatient ~ injury_type +
+                                     interview_age +
+                                     sex +
+                                     race_ethnicity +
+                                     household_income +
+                                     advlife_cat +
+                                     safety +
+                                     family_conflict_scale +
+                                     parent_mh_score +
+                                     (1|site_id_l),
+                                   data = imputed_data_baseline, family = binomial(link = "logit"),
+                                   control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
+)
+
+# View model values
+summary(inpatient_model_adjusted2)
+
+#
+# 2-year follow-up
+#
+
+# Ensure variables are stored as factors 
+imputed_data_t2$any_support <- as.factor(imputed_data_t2$any_support)
+imputed_data_t2$outpatient <- as.factor(imputed_data_t2$outpatient)
+imputed_data_t2$inpatient <- as.factor(imputed_data_t2$inpatient)
+imputed_data_t2$psychotherapy <- as.factor(imputed_data_t2$psychotherapy)
+imputed_data_t2$medication <- as.factor(imputed_data_t2$medication)
+imputed_data_t2$injury_type <- as.factor(imputed_data_t2$injury_type)
+imputed_data_t2$psychotherapy_medication <- as.factor(imputed_data_t2$psychotherapy_medication)
+
+# Any mental health support measured at 2-year follow-up 
+#
+
+# Change reference category 
+imputed_data_t2$any_support <- relevel(imputed_data_t2$any_support, ref = "No")
+imputed_data_t2$injury_type <- relevel(imputed_data_t2$injury_type, ref = "None")
+
+# Run unadjusted model 
+any_support_model_unadjusted_t2 <- glmer(any_support ~ injury_type +
+                                           (1|site_id_l),
+                                         data = imputed_data_t2,
+                                         family = binomial(),
+                                         control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
+)
+
+# Run adjusted model 1
+any_support_model_adjusted1_t2 <- glmer(any_support ~ injury_type +
+                                          interview_age +
+                                          sex +
+                                          race_ethnicity +
+                                          household_income +
+                                          (1|site_id_l),
+                                        data = imputed_data_t2,
+                                        family = binomial(link = "logit"),
+                                        control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
+)
+
+# Run adjusted model 2
+any_support_model_adjusted2_t2 <- glmer(any_support ~ injury_type +
+                                          advlife_cat +
+                                          safety +
+                                          family_conflict_scale +
+                                          parent_mh_score +
+                                          (1|site_id_l),
+                                        data = imputed_data_t2,
+                                        family = binomial(link = "logit"),
+                                        control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
+)
+
+# Psychotherapy measured at 2-year follow-up 
+#
+
+# Change reference category 
+imputed_data_t2$psychotherapy <- relevel(imputed_data_t2$psychotherapy, ref = "No")
+
+# Run unadjusted model 
+psychotherapy_model_unadjusted_t2 <- glmer(psychotherapy ~ injury_type + 
+                                             (1|site_id_l),
+                                           data = imputed_data_t2,
+                                           family = binomial(link = "logit"),
+                                           control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
+)
+
+# Run adjusted model 1
+psychotherapy_model_adjusted1_t2 <- glmer(psychotherapy ~ injury_type +
+                                            interview_age +
+                                            sex +
+                                            race_ethnicity +
+                                            household_income + 
+                                            (1|site_id_l),
+                                          data = imputed_data_t2,
+                                          family = binomial(link = "logit"),
+                                          control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
+)
+
+# Run adjusted model 2
+psychotherapy_model_adjusted2_t2 <- glmer(psychotherapy ~ injury_type +
+                                            interview_age +
+                                            sex +
+                                            race_ethnicity +
+                                            household_income +
+                                            advlife_cat +
+                                            safety +
+                                            family_conflict_scale +
+                                            parent_mh_score +
+                                            (1|site_id_l),
+                                          data = imputed_data_t2,
+                                          family = binomial(link = "logit"),
+                                          control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
+)
+
+# Medication for mental health measured at 2-year follow-up 
+#
+
+# Change reference category 
+imputed_data_t2$medication <- relevel(imputed_data_t2$medication, ref = "No")
+
+# Run unadjusted model 
+medication_model_unadjusted_t2 <- glmer(medication ~ injury_type + 
+                                          (1|site_id_l),
+                                        data = imputed_data_t2,
+                                        family = binomial(link = "logit"),
+                                        control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
+)
+
+# Run adjusted model 1
+medication_model_adjusted1_t2 <- glmer(medication ~ injury_type +
+                                         interview_age +
+                                         sex +
+                                         race_ethnicity +
+                                         household_income + 
+                                         (1|site_id_l),
+                                       data = imputed_data_t2,
+                                       family = binomial(link = "logit"),
+                                       control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
+)
+
+# Run adjusted model 2
+medication_model_adjusted2_t2 <- glmer(medication ~ injury_type +
+                                         interview_age +
+                                         sex +
+                                         race_ethnicity +
+                                         household_income +
+                                         advlife_cat +
+                                         safety +
+                                         family_conflict_scale +
+                                         parent_mh_score +
+                                         (1|site_id_l),
+                                       data = imputed_data_t2,
+                                       family = binomial(link = "logit"),
+                                       control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
+)
+
+# Psychotherapy and medication for mental health measured at 2-year follow-up 
+#
+
+# Change reference category 
+imputed_data_t2$psychotherapy_medication <- relevel(imputed_data_t2$psychotherapy_medication, ref = "No")
+
+# Run unadjusted model 
+psychotherapy_medication_model_unadjusted_t2 <- glmer(psychotherapy_medication ~ injury_type + 
+                                          (1|site_id_l),
+                                        data = imputed_data_t2,
+                                        family = binomial(link = "logit"),
+                                        control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
+)
+
+# Run adjusted model 1
+psychotherapy_medication_model_adjusted1_t2 <- glmer(psychotherapy_medication ~ injury_type +
+                                         interview_age +
+                                         sex +
+                                         race_ethnicity +
+                                         household_income + 
+                                         (1|site_id_l),
+                                       data = imputed_data_t2,
+                                       family = binomial(link = "logit"),
+                                       control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
+)
+
+# Run adjusted model 2
+psychotherapy_medication_model_adjusted2_t2 <- glmer(psychotherapy_medication ~ injury_type +
+                                         interview_age +
+                                         sex +
+                                         race_ethnicity +
+                                         household_income +
+                                         advlife_cat +
+                                         safety +
+                                         family_conflict_scale +
+                                         parent_mh_score +
+                                         (1|site_id_l),
+                                       data = imputed_data_t2,
+                                       family = binomial(link = "logit"),
+                                       control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
+)
+
+# Outpatient support measured at 2-year follow-up 
+#
+
+# Change reference category 
+imputed_data_t2$outpatient <- relevel(imputed_data_t2$outpatient, ref = "No")
+
+# Run unadjusted model 
+outpatient_model_unadjusted_t2 <- glmer(outpatient ~ injury_type +
+                                          (1|site_id_l),
+                                        data = imputed_data_t2,
+                                        family = binomial(),
+                                        control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
+)
+
+# View model values
+summary(outpatient_model_unadjusted_t2)
+
+# Run adjusted model 1
+outpatient_model_adjusted1_t2 <- glmer(outpatient ~ injury_type +
+                                         interview_age +
+                                         sex +
+                                         race_ethnicity +
+                                         household_income +
+                                         (1|site_id_l),
+                                       data = imputed_data_t2,
+                                       family = binomial(link = "logit"),
+                                       control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
+)
+
+# View model values
+summary(outpatient_model_adjusted1_t2)
+
+# Run adjusted model 2
+outpatient_model_adjusted2_t2 <- glmer(outpatient ~ injury_type +
+                                         interview_age +
+                                         sex +
+                                         race_ethnicity +
+                                         household_income +
+                                         advlife_cat +
+                                         safety +
+                                         family_conflict_scale +
+                                         parent_mh_score +
+                                         (1|site_id_l),
+                                       data = imputed_data_t2,
+                                       family = binomial(link = "logit"),
+                                       control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
+)
+
+# View model values
+summary(outpatient_model_adjusted2_t2)
+
+# Inpatient support measured at 2-year follow-up 
+#
+
+# Change reference category 
+imputed_data_t2$inpatient <- relevel(imputed_data_t2$inpatient, ref = "No")
+
+
+
+# Run unadjusted model 
+inpatient_model_unadjusted_t2 <- glmer(inpatient ~ injury_type +
+                                         (1|site_id_l),
+                                       data = imputed_data_t2,
+                                       family = binomial(),
+                                       control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
+)
+
+# View model values
+summary(inpatient_model_unadjusted_t2)
+
+# Run adjusted model 1
+inpatient_model_adjusted1_t2 <- glmer(inpatient ~ injury_type +
+                                        interview_age +
+                                        sex +
+                                        race_ethnicity +
+                                        household_income +
+                                        (1|site_id_l),
+                                      data = imputed_data_t2,
+                                      family = binomial(link = "logit"),
+                                      control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
+)
+
+# View model values
+summary(inpatient_model_adjusted1_t2)
+
+# Run adjusted model 2
+inpatient_model_adjusted2_t2 <- glmer(inpatient ~ injury_type +
+                                        interview_age +
+                                        sex +
+                                        race_ethnicity +
+                                        household_income +
+                                        advlife_cat +
+                                        safety +
+                                        family_conflict_scale +
+                                        parent_mh_score +
+                                        (1|site_id_l),
+                                      data = imputed_data_t2,
+                                      family = binomial(link = "logit"),
+                                      control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))
+)
+
+# View model values
+summary(inpatient_model_adjusted2_t2)
+
+
 ##############################################################################
 #
-# Create tables 
+# Create tables for psychiatric service use measured at baseline 
 #
-##############################################################################
+#############################################################################
 
-#
-# Tables for KSADS-5 analyses 
-#
-
-# Any anxiety disorder at baseline
+# Any mental health support measured at baseline
 #
 
 # Create unadjusted model table
-anxiety_unadjusted_table <- tbl_regression(anxiety_disorders_model_unadjusted, exponentiate = TRUE, label = injury_type ~ "Any present anxiety disorder") %>% 
+any_support_unadjusted_table <- tbl_regression(any_support_model_unadjusted, exponentiate = TRUE, label = injury_type ~ "Any mental health service use") %>% 
   remove_row_type(variable = injury_type, type = 'reference') %>%
   bold_labels() %>%
   italicize_levels() %>%
   modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
 
 # Create adjusted model 1 table
-anxiety_adjusted_table_model1 <- tbl_regression(anxiety_disorders_model_adjusted1, exponentiate = TRUE, 
-                                                      pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                      include = injury_type, 
-                                                      label = injury_type ~ "Any present anxiety disorder") %>% 
+any_support_adjusted_table_short_model1 <- tbl_regression(any_support_model_adjusted1, exponentiate = TRUE, 
+                                                          pvalue_fun = function(x) style_pvalue(x, digits = 2),
+                                                          include = injury_type, 
+                                                          label = injury_type ~ "Any mental health service use") %>% 
   bold_labels() %>%
   italicize_levels() %>%
   remove_row_type(variable = injury_type, type = 'reference') %>%
   modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
 
 # Create adjusted model 2 table
-anxiety_adjusted_table_model2 <- tbl_regression(anxiety_disorders_model_adjusted2, exponentiate = TRUE, 
-                                                      pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                      include = injury_type, 
-                                                      label = injury_type ~ "Any present anxiety disorder") %>% 
+any_support_adjusted_table_short_model2 <- tbl_regression(any_support_model_adjusted2, exponentiate = TRUE, 
+                                                          pvalue_fun = function(x) style_pvalue(x, digits = 2),
+                                                          include = injury_type, 
+                                                          label = injury_type ~ "Any mental health service use") %>% 
   remove_row_type(variable = injury_type, type = 'reference') %>%
   bold_labels() %>%
   italicize_levels() %>%
   modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
 
 # Merge unadjusted, adjusted model 1 and adjusted model 2 tables
-table_merge_anxiety <- tbl_merge(tbls = list(anxiety_unadjusted_table, anxiety_adjusted_table_model1, anxiety_adjusted_table_model2),
-                                       tab_spanner = c("**Unadjusted**","**Adjusted, model 1**", "**Adjusted, model 2**"))
-
-# Any behavioural disorder at baseline
-#
-
-# Create unadjusted model table
-behavioural_unadjusted_table <- tbl_regression(behavioural_disorders_model_unadjusted, exponentiate = TRUE, label = injury_type ~ "Any present behavioural disorder") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 1 table
-behavioural_adjusted_table_model1 <- tbl_regression(behavioural_disorders_model_adjusted1, exponentiate = TRUE, 
-                                                          pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                          include = injury_type, 
-                                                          label = injury_type ~ "Any present behavioural disorder") %>% 
-  bold_labels() %>%
-  italicize_levels() %>%
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 2 table
-behavioural_adjusted_table_model2 <- tbl_regression(behavioural_disorders_model_adjusted2, exponentiate = TRUE, 
-                                                          pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                          include = injury_type, 
-                                                          label = injury_type ~ "Any present behavioural disorder") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Merge unadjusted, adjusted model 1 and adjusted model 2 tables
-table_merge_behavioural <- tbl_merge(tbls = list(behavioural_unadjusted_table, behavioural_adjusted_table_model1, behavioural_adjusted_table_model2),
+table_merge_any_support_short <- tbl_merge(tbls = list(any_support_unadjusted_table, any_support_adjusted_table_short_model1, any_support_adjusted_table_short_model2),
                                            tab_spanner = c("**Unadjusted**","**Adjusted, model 1**", "**Adjusted, model 2**"))
 
-
-
-# CBCL total problems score at baseline
+# Psychotherapy measured at baseline
 #
 
 # Create unadjusted model table
-cbcl_tot_symptoms_unadjusted_table <- tbl_regression(cbcl_tot_symptoms_model_unadjusted, label = injury_type ~ "Total problems scale") %>% 
+psychotherapy_unadjusted_table <- tbl_regression(psychotherapy_model_unadjusted, exponentiate = TRUE, label = injury_type ~ "Psychotherapy") %>% 
   remove_row_type(variable = injury_type, type = 'reference') %>%
   bold_labels() %>%
   italicize_levels() %>%
   modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
 
 # Create adjusted model 1 table
-cbcl_tot_symptoms_adjusted_table_model1 <- tbl_regression(cbcl_tot_symptoms_model_adjusted1, 
-                                                          estimate_fun = function(x) style_number(x, digits = 2),
-                                                          include = injury_type, 
-                                                          label = injury_type ~ "Total problems scale") %>% 
+psychotherapy_adjusted_table_short_model1 <- tbl_regression(psychotherapy_model_adjusted1, exponentiate = TRUE, 
+                                                            pvalue_fun = function(x) style_pvalue(x, digits = 2),
+                                                            include = injury_type, 
+                                                            label = injury_type ~ "Psychotherapy") %>%
+  remove_row_type(variable = injury_type, type = 'reference') %>%
   bold_labels() %>%
   italicize_levels() %>%
-  remove_row_type(variable = injury_type, type = 'reference') %>%
   modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
 
 # Create adjusted model 2 table
-cbcl_tot_symptoms_adjusted_table_model2 <- tbl_regression(cbcl_tot_symptoms_model_adjusted2, 
-                                                          pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                          include = injury_type, 
-                                                          label = injury_type ~ "Total problems scale") %>% 
+psychotherapy_adjusted_table_short_model2 <- tbl_regression(psychotherapy_model_adjusted2, exponentiate = TRUE, 
+                                                            pvalue_fun = function(x) style_pvalue(x, digits = 2),
+                                                            include = injury_type, 
+                                                            label = injury_type ~ "Psychotherapy") %>% 
   remove_row_type(variable = injury_type, type = 'reference') %>%
   bold_labels() %>%
   italicize_levels() %>%
   modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
 
 # Merge unadjusted, adjusted model 1 and adjusted model 2 tables
-table_merge_cbcl_tot_symptoms <- tbl_merge(tbls = list(cbcl_tot_symptoms_unadjusted_table, cbcl_tot_symptoms_adjusted_table_model1, cbcl_tot_symptoms_adjusted_table_model2),
-                                           tab_spanner = c("**Unadjusted**","**Adjusted, model 1**", "**Adjusted, model 2**"))
+table_merge_psychotherapy_short <- tbl_merge(tbls = list(psychotherapy_unadjusted_table, psychotherapy_adjusted_table_short_model1, psychotherapy_adjusted_table_short_model2),
+                                             tab_spanner = c("**Unadjusted**","**Adjusted, model 1**", "**Adjusted, model 2**"))
 
-
-
-# Create table for any present anxiety and behavioural disorder and total problems at baseline
+# Medication for mental health measured at baseline
 #
 
-# Merge anxiety and behavioural disorder tables 
-ksad_table_baseline <- tbl_stack(tbls = list(table_merge_anxiety, table_merge_behavioural, table_merge_cbcl_tot_symptoms)) %>%
-  modify_caption("**Table 2. Association between mental health at age 9-10 and lifetime mTBI / orthopaedic injury**")
+# Create unadjusted model table
+medication_unadjusted_table <- tbl_regression(medication_model_unadjusted, exponentiate = TRUE, 
+                                              label = injury_type ~ "Medication for mental health") %>% 
+  remove_row_type(variable = injury_type, type = 'reference') %>%
+  bold_labels() %>%
+  italicize_levels() %>%
+  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
+
+# Create adjusted model 1 table
+medication_adjusted_table_short_model1 <- tbl_regression(medication_model_adjusted1, exponentiate = TRUE, 
+                                                         pvalue_fun = function(x) style_pvalue(x, digits = 2),
+                                                         include = injury_type,
+                                                         label = injury_type ~ "Medication for mental health") %>% 
+  remove_row_type(variable = injury_type, type = 'reference') %>%
+  bold_labels() %>%
+  italicize_levels() %>%
+  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
+
+# Create adjusted model 2 table
+medication_adjusted_table_short_model2 <- tbl_regression(medication_model_adjusted2, exponentiate = TRUE, 
+                                                         pvalue_fun = function(x) style_pvalue(x, digits = 2),
+                                                         include = injury_type,
+                                                         label = injury_type ~ "Medication for mental health") %>%
+  remove_row_type(variable = injury_type, type = 'reference') %>%
+  bold_labels() %>%
+  italicize_levels() %>%
+  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
+
+# Merge unadjusted, adjusted model 1 and adjusted model 2 tables
+table_merge_medication_short <- tbl_merge(tbls = list(medication_unadjusted_table, medication_adjusted_table_short_model1, medication_adjusted_table_short_model2),
+                                          tab_spanner = c("**Unadjusted**","**Adjusted, model 1**", "**Adjusted, model 2**"))
+
+
+# Psychotherapy and medication for mental health measured at baseline
+#
+
+# Create unadjusted model table
+psychotherapy_medication_unadjusted_table <- tbl_regression(psychotherapy_medication_model_unadjusted, exponentiate = TRUE, 
+                                              label = injury_type ~ "Psychotherapy and/or medication for mental health") %>% 
+  remove_row_type(variable = injury_type, type = 'reference') %>%
+  bold_labels() %>%
+  italicize_levels() %>%
+  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
+
+# Create adjusted model 1 table
+psychotherapy_medication_adjusted_table_short_model1 <- tbl_regression(psychotherapy_medication_model_adjusted1, exponentiate = TRUE, 
+                                                         pvalue_fun = function(x) style_pvalue(x, digits = 2),
+                                                         include = injury_type,
+                                                         label = injury_type ~ "Psychotherapy and/or medication for mental health") %>% 
+  remove_row_type(variable = injury_type, type = 'reference') %>%
+  bold_labels() %>%
+  italicize_levels() %>%
+  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
+
+# Create adjusted model 2 table
+psychotherapy_medication_adjusted_table_short_model2 <- tbl_regression(psychotherapy_medication_model_adjusted2, exponentiate = TRUE, 
+                                                         pvalue_fun = function(x) style_pvalue(x, digits = 2),
+                                                         include = injury_type,
+                                                         label = injury_type ~ "Psychotherapy and/or medication for mental health") %>%
+  remove_row_type(variable = injury_type, type = 'reference') %>%
+  bold_labels() %>%
+  italicize_levels() %>%
+  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
+
+# Merge unadjusted, adjusted model 1 and adjusted model 2 tables
+table_merge_psychotherapy_medication_short <- tbl_merge(tbls = list(psychotherapy_medication_unadjusted_table, 
+                                                                    psychotherapy_medication_adjusted_table_short_model1, psychotherapy_medication_adjusted_table_short_model2),
+                                          tab_spanner = c("**Unadjusted**","**Adjusted, model 1**", "**Adjusted, model 2**"))
+
+# Create table for psychiatric service use at baseline
+#
+
+# Merge  psychotherapy, medication and any mental health support tables 
+psyc_service_baseline_table <- tbl_stack(tbls = list(table_merge_psychotherapy_short, table_merge_medication_short, table_merge_psychotherapy_medication_short, table_merge_any_support_short)) %>%
+  modify_caption("**Table 4. Association between history of mTBI / orthopaedic injury and mental health service use at baseline (age 9-10)**")
 
 # Save table 
-table_2_filename = paste(output_dir, "imputed_ksad_disorders_baseline.html", sep="")
-gt::gtsave(as_gt(ksad_table_baseline), file = table_2_filename)
+table_2_filename = paste(output_dir, "imputed_psyc_service_baseline.html", sep="")
+gt::gtsave(as_gt(psyc_service_baseline_table), file = table_2_filename)
 head(table_2_filename)
 
 
+##############################################################################
+#
+# Create tables for psychiatric service use measured at 2-year follow-up 
+#
+#############################################################################
 
-# Anxiety disorders at 2-year follow-up 
+# Any mental health support measured at 2-year follow-up 
 #
 
 # Create unadjusted model table
-anxiety_unadjusted_table_t2 <- tbl_regression(anxiety_disorders_model_unadjusted_t2, exponentiate = TRUE, label = injury_type ~ "Any present anxiety disorder") %>% 
+any_support_unadjusted_table_t2 <- tbl_regression(any_support_model_unadjusted_t2, exponentiate = TRUE, label = injury_type ~ "Any mental health service use") %>% 
   remove_row_type(variable = injury_type, type = 'reference') %>%
   bold_labels() %>%
   italicize_levels() %>%
   modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
 
 # Create adjusted model 1 table
-anxiety_adjusted_table_model1_t2 <- tbl_regression(anxiety_disorders_model_adjusted1_t2, exponentiate = TRUE, 
-                                                      pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                      include = injury_type, 
-                                                      label = injury_type ~ "Any present anxiety disorder") %>% 
-  bold_labels() %>%
-  italicize_levels() %>%
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 2 table
-anxiety_adjusted_table_model2_t2 <- tbl_regression(anxiety_disorders_model_adjusted2_t2, exponentiate = TRUE, 
-                                                      pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                      include = injury_type, 
-                                                      label = injury_type ~ "Any present anxiety disorder") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Merge unadjusted, adjusted model 1 and adjusted model 2 tables
-table_merge_anxiety_t2 <- tbl_merge(tbls = list(anxiety_unadjusted_table_t2, anxiety_adjusted_table_model1_t2, anxiety_adjusted_table_model2_t2),
-                                       tab_spanner = c("**Unadjusted**","**Adjusted, model 1**", "**Adjusted, model 2**"))
-
-# Any behavioural disorder at 2-year follow-up 
-#
-
-# Create unadjusted model table
-behavioural_unadjusted_table_t2 <- tbl_regression(behavioural_disorders_model_unadjusted_t2, exponentiate = TRUE, label = injury_type ~ "Any present behavioural disorder") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 1 table
-behavioural_adjusted_table_model1_t2 <- tbl_regression(behavioural_disorders_model_adjusted1_t2, exponentiate = TRUE, 
-                                                          pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                          include = injury_type, 
-                                                          label = injury_type ~ "Any present behavioural disorder") %>% 
-  bold_labels() %>%
-  italicize_levels() %>%
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 2 table
-behavioural_adjusted_table_model2_t2 <- tbl_regression(behavioural_disorders_model_adjusted2_t2, exponentiate = TRUE, 
-                                                          pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                          include = injury_type, 
-                                                          label = injury_type ~ "Any present behavioural disorder") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Merge unadjusted, adjusted model 1 and adjusted model 2 tables
-table_merge_behavioural_t2 <- tbl_merge(tbls = list(behavioural_unadjusted_table_t2, behavioural_adjusted_table_model1_t2, behavioural_adjusted_table_model2_t2),
-                                           tab_spanner = c("**Unadjusted**","**Adjusted, model 1**", "**Adjusted, model 2**"))
-
-
-# CBCL total problems score at 2-year follow-up 
-#
-
-# Create unadjusted model table
-cbcl_tot_symptoms_unadjusted_table_t2 <- tbl_regression(cbcl_tot_symptoms_model_unadjusted_t2, label = injury_type ~ "Total problems scale") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-
-# Create adjusted model 1 table
-cbcl_tot_symptoms_adjusted_table_model1_t2 <- tbl_regression(cbcl_tot_symptoms_model_adjusted1_t2, 
-                                                             estimate_fun = function(x) style_number(x, digits = 3),
-                                                             include = injury_type, 
-                                                             label = injury_type ~ "Total problems scale") %>% 
-  bold_labels() %>%
-  italicize_levels() %>%
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 2 table
-cbcl_tot_symptoms_adjusted_table_model2_t2 <- tbl_regression(cbcl_tot_symptoms_model_adjusted2_t2, 
+any_support_adjusted_table_short_model1_t2 <- tbl_regression(any_support_model_adjusted1_t2, exponentiate = TRUE, 
                                                              pvalue_fun = function(x) style_pvalue(x, digits = 2),
                                                              include = injury_type, 
-                                                             label = injury_type ~ "Total problems scale") %>% 
+                                                             label = injury_type ~ "Any mental health service use") %>% 
+  bold_labels() %>%
+  italicize_levels() %>%
+  remove_row_type(variable = injury_type, type = 'reference') %>%
+  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
+
+# Create adjusted model 2 table
+any_support_adjusted_table_short_model2_t2 <- tbl_regression(any_support_model_adjusted2_t2, exponentiate = TRUE, 
+                                                             pvalue_fun = function(x) style_pvalue(x, digits = 2),
+                                                             include = injury_type, 
+                                                             label = injury_type ~ "Any mental health service use") %>% 
   remove_row_type(variable = injury_type, type = 'reference') %>%
   bold_labels() %>%
   italicize_levels() %>%
   modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
 
 # Merge unadjusted, adjusted model 1 and adjusted model 2 tables
-table_merge_cbcl_tot_symptoms_t2 <- tbl_merge(tbls = list(cbcl_tot_symptoms_unadjusted_table_t2, cbcl_tot_symptoms_adjusted_table_model1_t2, cbcl_tot_symptoms_adjusted_table_model2_t2),
+table_merge_any_support_short_t2 <- tbl_merge(tbls = list(any_support_unadjusted_table_t2, any_support_adjusted_table_short_model1_t2, any_support_adjusted_table_short_model2_t2),
                                               tab_spanner = c("**Unadjusted**","**Adjusted, model 1**", "**Adjusted, model 2**"))
 
-
-
-# Create table for any present anxiety and behavioural disorder and total problems score at 2-year follow-up 
+# Psychotherapy measured at 2-year follow-up
 #
 
-# Merge anxiety and behavioural disorder tables 
-ksad_table_2year <- tbl_stack(tbls = list(table_merge_anxiety_t2, table_merge_behavioural_t2, table_merge_cbcl_tot_symptoms_t2)) %>%
-  modify_caption("**Table 3. Association between mental health at age 11-12 and new mTBI / orthopaedic injury in the previous 24 months**")
+# Create unadjusted model table
+psychotherapy_unadjusted_table_t2 <- tbl_regression(psychotherapy_model_unadjusted_t2, exponentiate = TRUE, label = injury_type ~ "Psychotherapy") %>% 
+  remove_row_type(variable = injury_type, type = 'reference') %>%
+  bold_labels() %>%
+  italicize_levels() %>%
+  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
+
+# Create adjusted model 1 table
+psychotherapy_adjusted_table_short_model1_t2 <- tbl_regression(psychotherapy_model_adjusted1_t2, exponentiate = TRUE, 
+                                                               pvalue_fun = function(x) style_pvalue(x, digits = 2),
+                                                               include = injury_type, 
+                                                               label = injury_type ~ "Psychotherapy") %>%
+  remove_row_type(variable = injury_type, type = 'reference') %>%
+  bold_labels() %>%
+  italicize_levels() %>%
+  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
+
+# Create adjusted model 2 table
+psychotherapy_adjusted_table_short_model2_t2 <- tbl_regression(psychotherapy_model_adjusted2_t2, exponentiate = TRUE, 
+                                                               pvalue_fun = function(x) style_pvalue(x, digits = 2),
+                                                               include = injury_type, 
+                                                               label = injury_type ~ "Psychotherapy") %>% 
+  remove_row_type(variable = injury_type, type = 'reference') %>%
+  bold_labels() %>%
+  italicize_levels() %>%
+  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
+
+
+# Merge unadjusted, adjusted model 1 and adjusted model 2 tables
+table_merge_psychotherapy_short_t2 <- tbl_merge(tbls = list(psychotherapy_unadjusted_table_t2, psychotherapy_adjusted_table_short_model1_t2, psychotherapy_adjusted_table_short_model2_t2),
+                                                tab_spanner = c("**Unadjusted**","**Adjusted, model 1**", "**Adjusted, model 2**"))
+
+# Medication measured at 2-year follow-up
+#
+
+# Create unadjusted model table
+medication_unadjusted_table_t2 <- tbl_regression(medication_model_unadjusted_t2, exponentiate = TRUE, 
+                                              label = injury_type ~ "Medication for mental health") %>% 
+  remove_row_type(variable = injury_type, type = 'reference') %>%
+  bold_labels() %>%
+  italicize_levels() %>%
+  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
+
+# Create adjusted model 1 table
+medication_adjusted_table_short_model1_t2 <- tbl_regression(medication_model_adjusted1_t2, exponentiate = TRUE, 
+                                                         pvalue_fun = function(x) style_pvalue(x, digits = 2),
+                                                         include = injury_type,
+                                                         label = injury_type ~ "Medication for mental health") %>% 
+  remove_row_type(variable = injury_type, type = 'reference') %>%
+  bold_labels() %>%
+  italicize_levels() %>%
+  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
+
+# Create adjusted model 2 table
+medication_adjusted_table_short_model2_t2 <- tbl_regression(medication_model_adjusted2_t2, exponentiate = TRUE, 
+                                                         pvalue_fun = function(x) style_pvalue(x, digits = 2),
+                                                         include = injury_type,
+                                                         label = injury_type ~ "Medication for mental health") %>%
+  remove_row_type(variable = injury_type, type = 'reference') %>%
+  bold_labels() %>%
+  italicize_levels() %>%
+  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
+
+# Merge unadjusted, adjusted model 1 and adjusted model 2 tables
+table_merge_medication_short_t2 <- tbl_merge(tbls = list(medication_unadjusted_table_t2, medication_adjusted_table_short_model1_t2, medication_adjusted_table_short_model2_t2),
+                                          tab_spanner = c("**Unadjusted**","**Adjusted, model 1**", "**Adjusted, model 2**"))
+
+
+# Psychotherapy and medication measured at 2-year follow-up
+#
+
+# Create unadjusted model table
+psychotherapy_medication_unadjusted_table_t2 <- tbl_regression(psychotherapy_medication_model_unadjusted_t2, exponentiate = TRUE, 
+                                                 label = injury_type ~ "Psychotherapy and/or medication for mental health") %>% 
+  remove_row_type(variable = injury_type, type = 'reference') %>%
+  bold_labels() %>%
+  italicize_levels() %>%
+  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
+
+# Create adjusted model 1 table
+psychotherapy_medication_adjusted_table_short_model1_t2 <- tbl_regression(psychotherapy_medication_model_adjusted1_t2, exponentiate = TRUE, 
+                                                            pvalue_fun = function(x) style_pvalue(x, digits = 2),
+                                                            include = injury_type,
+                                                            label = injury_type ~ "Psychotherapy and/or medication for mental health") %>% 
+  remove_row_type(variable = injury_type, type = 'reference') %>%
+  bold_labels() %>%
+  italicize_levels() %>%
+  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
+
+# Create adjusted model 2 table
+psychotherapy_medication_adjusted_table_short_model2_t2 <- tbl_regression(psychotherapy_medication_model_adjusted2_t2, exponentiate = TRUE, 
+                                                            pvalue_fun = function(x) style_pvalue(x, digits = 2),
+                                                            include = injury_type,
+                                                            label = injury_type ~ "Psychotherapy and/or medication for mental health") %>%
+  remove_row_type(variable = injury_type, type = 'reference') %>%
+  bold_labels() %>%
+  italicize_levels() %>%
+  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
+
+# Merge unadjusted, adjusted model 1 and adjusted model 2 tables
+table_merge_psychotherapy_medication_short_t2 <- tbl_merge(tbls = list(psychotherapy_medication_unadjusted_table_t2, psychotherapy_medication_adjusted_table_short_model1_t2, 
+                                                                       psychotherapy_medication_adjusted_table_short_model2_t2),
+                                             tab_spanner = c("**Unadjusted**","**Adjusted, model 1**", "**Adjusted, model 2**"))
+
+# # Create table for psychiatric service use at 2-year follow-up
+#
+
+# Merge  psychotherapy, medication and any mental health support tables 
+psyc_service_t2_table <- tbl_stack(tbls = list(table_merge_psychotherapy_short_t2, table_merge_medication_short_t2, table_merge_psychotherapy_medication_short_t2, table_merge_any_support_short_t2)) %>%
+  modify_caption("**Table 5. Association between new mTBI / orthopaedic injury and mental health service use in the 12-24 months following baseline (age 11-12)**")
 
 # Save table 
-table_2_filename = paste(output_dir, "imputed_ksad_disorders_t2.html", sep="")
-gt::gtsave(as_gt(ksad_table_2year), file = table_2_filename)
+table_2_filename = paste(output_dir, "imputed_psyc_service_t2.html", sep="")
+gt::gtsave(as_gt(psyc_service_t2_table), file = table_2_filename)
 head(table_2_filename)
-
-#
-#
-# Create tables for CBCL symptom subscale analyses 
-#
-
-# Internalising symptoms at baseline
-#
-
-# Create unadjusted model table
-cbcl_int_symptoms_unadjusted_table <- tbl_regression(cbcl_int_symptoms_model_unadjusted, label = injury_type ~ "Internalising symptoms scale") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 1 table
-cbcl_int_symptoms_adjusted_table_model1 <- tbl_regression(cbcl_int_symptoms_model_adjusted1, 
-                                                                estimate_fun = function(x) style_number(x, digits = 2),
-                                                                include = injury_type, 
-                                                                label = injury_type ~ "Internalising symptoms scale") %>% 
-  bold_labels() %>%
-  italicize_levels() %>%
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 2 table
-cbcl_int_symptoms_adjusted_table_model2 <- tbl_regression(cbcl_int_symptoms_model_adjusted2, 
-                                                                pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                                include = injury_type, 
-                                                                label = injury_type ~ "Internalising symptoms scale") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Merge unadjusted, adjusted model 1 and adjusted model 2 tables
-table_merge_cbcl_int_symptoms <- tbl_merge(tbls = list(cbcl_int_symptoms_unadjusted_table, cbcl_int_symptoms_adjusted_table_model1, cbcl_int_symptoms_adjusted_table_model2),
-                                                 tab_spanner = c("**Unadjusted**","**Adjusted, model 1**", "**Adjusted, model 2**"))
-
-# Externalising symptoms at baseline
-#
-
-# Create unadjusted model table
-cbcl_ext_symptoms_unadjusted_table <- tbl_regression(cbcl_ext_symptoms_model_unadjusted, label = injury_type ~ "Externalising symptoms scale") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 1 table
-cbcl_ext_symptoms_adjusted_table_model1 <- tbl_regression(cbcl_ext_symptoms_model_adjusted1, 
-                                                                estimate_fun = function(x) style_number(x, digits = 2),
-                                                                include = injury_type, 
-                                                                label = injury_type ~ "Externalising symptoms scale") %>% 
-  bold_labels() %>%
-  italicize_levels() %>%
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 2 table
-cbcl_ext_symptoms_adjusted_table_model2 <- tbl_regression(cbcl_ext_symptoms_model_adjusted2, 
-                                                                pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                                include = injury_type, 
-                                                                label = injury_type ~ "Externalising symptoms scale") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Merge unadjusted, adjusted model 1 and adjusted model 2 tables
-table_merge_cbcl_ext_symptoms <- tbl_merge(tbls = list(cbcl_ext_symptoms_unadjusted_table, cbcl_ext_symptoms_adjusted_table_model1, cbcl_ext_symptoms_adjusted_table_model2),
-                                                 tab_spanner = c("**Unadjusted**","**Adjusted, model 1**", "**Adjusted, model 2**"))
-
-
-
-# Anxiety symptoms at baseline 
-#
-
-# Create unadjusted model table
-anxiety_symptoms_unadjusted_table <- tbl_regression(anxiety_symptoms_model_unadjusted, label = injury_type ~ "Anxiety symptoms score") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 1 table
-anxiety_symptoms_adjusted_table_model1 <- tbl_regression(anxiety_symptoms_model_adjusted1,  
-                                                         pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                         include = injury_type, 
-                                                         label = injury_type ~ "Anxiety symptoms score") %>% 
-  bold_labels() %>%
-  italicize_levels() %>%
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 2 table
-anxiety_symptoms_adjusted_table_model2 <- tbl_regression(anxiety_symptoms_model_adjusted2,  
-                                                         pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                         include = injury_type, 
-                                                         label = injury_type ~ "Anxiety symptoms score") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Merge unadjusted, adjusted model 1 and adjusted model 2 tables
-table_merge_anxiety_symptoms <- tbl_merge(tbls = list(anxiety_symptoms_unadjusted_table, anxiety_symptoms_adjusted_table_model1, anxiety_symptoms_adjusted_table_model2),
-                                          tab_spanner = c("**Unadjusted**","**Adjusted, model 1**", "**Adjusted, model 2**"))
-
-# Depression symptoms at baseline 
-#
-
-# Create unadjusted model table
-depression_symptoms_unadjusted_table <- tbl_regression(depression_symptoms_model_unadjusted, label = injury_type ~ "Depression symptoms score") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 1 table
-depression_symptoms_adjusted_table_model1 <- tbl_regression(depression_symptoms_model_adjusted1, 
-                                                            pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                            include = injury_type, 
-                                                            label = injury_type ~ "Depression symptoms score") %>% 
-  bold_labels() %>%
-  italicize_levels() %>%
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 2 table
-depression_symptoms_adjusted_table_model2 <- tbl_regression(depression_symptoms_model_adjusted2, 
-                                                            pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                            include = injury_type, 
-                                                            label = injury_type ~ "Depression symptoms score") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Merge unadjusted, adjusted model 1 and adjusted model 2 tables
-table_merge_depression_symptoms <- tbl_merge(tbls = list(depression_symptoms_unadjusted_table, depression_symptoms_adjusted_table_model1, depression_symptoms_adjusted_table_model2),
-                                             tab_spanner = c("**Unadjusted**","**Adjusted, model 1**", "**Adjusted, model 2**"))
-
-# ADHD symptoms at baseline 
-#
-#
-
-# Create unadjusted model table
-adhd_symptoms_unadjusted_table <- tbl_regression(adhd_symptoms_model_unadjusted, label = injury_type ~ "ADHD symptoms score") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 1 table
-adhd_symptoms_adjusted_table_model1 <- tbl_regression(adhd_symptoms_model_adjusted1,
-                                                      pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                      include = injury_type, 
-                                                      label = injury_type ~ "ADHD symptoms score") %>% 
-  bold_labels() %>%
-  italicize_levels() %>%
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 2 table
-adhd_symptoms_adjusted_table_model2 <- tbl_regression(adhd_symptoms_model_adjusted2, 
-                                                      pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                      include = injury_type, 
-                                                      label = injury_type ~ "ADHD symptoms score") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-
-# Merge unadjusted, adjusted model 1 and adjusted model 2 tables
-table_merge_adhd_symptoms <- tbl_merge(tbls = list(adhd_symptoms_unadjusted_table, adhd_symptoms_adjusted_table_model1, adhd_symptoms_adjusted_table_model2),
-                                       tab_spanner = c("**Unadjusted**","**Adjusted, model 1**", "**Adjusted, model 2**"))
-
-# ODD symptoms at baseline 
-#
-
-# Create unadjusted model table
-odd_symptoms_unadjusted_table <- tbl_regression(odd_symptoms_model_unadjusted, label = injury_type ~ "ODD symptoms score") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 1 table
-odd_symptoms_adjusted_table_model1 <- tbl_regression(odd_symptoms_model_adjusted1, 
-                                                     pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                     include = injury_type, 
-                                                     label = injury_type ~ "ODD symptoms score") %>% 
-  bold_labels() %>%
-  italicize_levels() %>%
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 2 table
-odd_symptoms_adjusted_table_model2 <- tbl_regression(odd_symptoms_model_adjusted2,  
-                                                     pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                     include = injury_type, 
-                                                     label = injury_type ~ "ODD symptoms score") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-
-# Merge unadjusted, adjusted model 1 and adjusted model 2 tables
-table_merge_odd_symptoms <- tbl_merge(tbls = list(odd_symptoms_unadjusted_table, odd_symptoms_adjusted_table_model1, odd_symptoms_adjusted_table_model2),
-                                      tab_spanner = c("**Unadjusted**","**Adjusted, model 1**", "**Adjusted, model 2**"))
-
-# Conduct symptoms at baseline 
-#
-
-# Create unadjusted model table
-conduct_symptoms_unadjusted_table <- tbl_regression(conduct_symptoms_model_unadjusted, label = injury_type ~ "Conduct problems score") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 1 table
-conduct_symptoms_adjusted_table_model1 <- tbl_regression(conduct_symptoms_model_adjusted1, 
-                                                         estimate_fun = function(x) style_number(x, digits = 3),
-                                                         include = injury_type, 
-                                                         label = injury_type ~ "Conduct problems score") %>% 
-  bold_labels() %>%
-  italicize_levels() %>%
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 2 table
-conduct_symptoms_adjusted_table_model2 <- tbl_regression(conduct_symptoms_model_adjusted2, 
-                                                         pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                         include = injury_type, 
-                                                         label = injury_type ~ "Conduct problems score") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Merge unadjusted, adjusted model 1 and adjusted model 2 tables
-table_merge_conduct_symptoms <- tbl_merge(tbls = list(conduct_symptoms_unadjusted_table, conduct_symptoms_adjusted_table_model1, conduct_symptoms_adjusted_table_model2),
-                                          tab_spanner = c("**Unadjusted**","**Adjusted, model 1**", "**Adjusted, model 2**"))
-
-# Create table for CBCL symptom subscales at baseline  
-#
-
-# Merge internalising, externalising, anxiety, depression, ADHD, ODD and conduct symptom tables
-cbcl_symptoms_baseline_table <- tbl_stack(tbls = list(table_merge_cbcl_int_symptoms, table_merge_cbcl_ext_symptoms, table_merge_anxiety_symptoms, table_merge_depression_symptoms, table_merge_adhd_symptoms, table_merge_conduct_symptoms, table_merge_odd_symptoms)) %>%
-  modify_caption("**Supplementary Table 1. Association between mental health symptoms at age 9-10 and lifetime mTBI / orthopaedic injury**")
-
-# Save table 
-table_1_filename = paste(output_dir, "imputed_cbcl_subscale_symptoms_baseline.html", sep="")
-gt::gtsave(as_gt(cbcl_symptoms_baseline_table), file = table_1_filename)
-head(table_1_filename)
-
-
-# Internalising symptoms at 2-year follow-up 
-#
-
-# Create unadjusted model table
-cbcl_int_symptoms_unadjusted_table_t2 <- tbl_regression(cbcl_int_symptoms_model_unadjusted_t2, label = injury_type ~ "Internalising symptoms scale") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 1 table
-cbcl_int_symptoms_adjusted_table_model1_t2 <- tbl_regression(cbcl_int_symptoms_model_adjusted1_t2, 
-                                                                estimate_fun = function(x) style_number(x, digits = 3),
-                                                                include = injury_type, 
-                                                                label = injury_type ~ "Internalising symptoms scale") %>% 
-  bold_labels() %>%
-  italicize_levels() %>%
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 2 table
-cbcl_int_symptoms_adjusted_table_model2_t2 <- tbl_regression(cbcl_int_symptoms_model_adjusted2_t2, 
-                                                                pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                                include = injury_type, 
-                                                                label = injury_type ~ "Internalising symptoms scale") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Merge unadjusted, adjusted model 1 and adjusted model 2 tables
-table_merge_cbcl_int_symptoms_t2 <- tbl_merge(tbls = list(cbcl_int_symptoms_unadjusted_table_t2, cbcl_int_symptoms_adjusted_table_model1_t2, cbcl_int_symptoms_adjusted_table_model2_t2),
-                                                 tab_spanner = c("**Unadjusted**","**Adjusted, model 1**", "**Adjusted, model 2**"))
-
-# Externalising symptoms at 2-year follow-up 
-#
-
-# Create unadjusted model table
-cbcl_ext_symptoms_unadjusted_table_t2 <- tbl_regression(cbcl_ext_symptoms_model_unadjusted_t2, label = injury_type ~ "Externalising symptoms scale") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 1 table
-cbcl_ext_symptoms_adjusted_table_model1_t2 <- tbl_regression(cbcl_ext_symptoms_model_adjusted1_t2, 
-                                                                estimate_fun = function(x) style_number(x, digits = 3),
-                                                                include = injury_type, 
-                                                                label = injury_type ~ "Externalising symptoms scale") %>% 
-  bold_labels() %>%
-  italicize_levels() %>%
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 2 table
-cbcl_ext_symptoms_adjusted_table_model2_t2 <- tbl_regression(cbcl_ext_symptoms_model_adjusted2_t2, 
-                                                                pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                                include = injury_type, 
-                                                                label = injury_type ~ "Externalising symptoms scale") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Merge unadjusted, adjusted model 1 and adjusted model 2 tables
-table_merge_cbcl_ext_symptoms_t2 <- tbl_merge(tbls = list(cbcl_ext_symptoms_unadjusted_table_t2, cbcl_ext_symptoms_adjusted_table_model1_t2, cbcl_ext_symptoms_adjusted_table_model2_t2),
-                                                 tab_spanner = c("**Unadjusted**","**Adjusted, model 1**", "**Adjusted, model 2**"))
-
-
-# Anxiety symptoms at 2-year follow-up 
-#
-
-# Create unadjusted model table
-anxiety_symptoms_unadjusted_table_t2 <- tbl_regression(anxiety_symptoms_model_unadjusted_t2, label = injury_type ~ "Anxiety symptoms score") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 1 table
-anxiety_symptoms_adjusted_table_model1_t2 <- tbl_regression(anxiety_symptoms_model_adjusted1_t2,  
-                                                               pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                               include = injury_type, 
-                                                               label = injury_type ~ "Anxiety symptoms score") %>% 
-  bold_labels() %>%
-  italicize_levels() %>%
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 2 table
-anxiety_symptoms_adjusted_table_model2_t2 <- tbl_regression(anxiety_symptoms_model_adjusted2_t2,  
-                                                               pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                               include = injury_type, 
-                                                               label = injury_type ~ "Anxiety symptoms score") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Merge unadjusted, adjusted model 1 and adjusted model 2 tables
-table_merge_anxiety_symptoms_t2 <- tbl_merge(tbls = list(anxiety_symptoms_unadjusted_table_t2, anxiety_symptoms_adjusted_table_model1_t2, anxiety_symptoms_adjusted_table_model2_t2),
-                                                tab_spanner = c("**Unadjusted**","**Adjusted, model 1**", "**Adjusted, model 2**"))
-
-# Depression symptoms at 2-year follow-up 
-#
-
-# Create unadjusted model table
-depression_symptoms_unadjusted_table_t2 <- tbl_regression(depression_symptoms_model_unadjusted_t2, label = injury_type ~ "Depression symptoms score") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 1 table
-depression_symptoms_adjusted_table_model1_t2 <- tbl_regression(depression_symptoms_model_adjusted1_t2, 
-                                                                  pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                                  include = injury_type, 
-                                                                  label = injury_type ~ "Depression symptoms score") %>% 
-  bold_labels() %>%
-  italicize_levels() %>%
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 2 table
-depression_symptoms_adjusted_table_model2_t2 <- tbl_regression(depression_symptoms_model_adjusted2_t2, 
-                                                                  pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                                  include = injury_type, 
-                                                                  label = injury_type ~ "Depression symptoms score") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Merge unadjusted, adjusted model 1 and adjusted model 2 tables
-table_merge_depression_symptoms_t2 <- tbl_merge(tbls = list(depression_symptoms_unadjusted_table_t2, depression_symptoms_adjusted_table_model1_t2, depression_symptoms_adjusted_table_model2_t2),
-                                                   tab_spanner = c("**Unadjusted**","**Adjusted, model 1**", "**Adjusted, model 2**"))
-
-# ADHD symptoms at 2-year follow-up 
-
-# Create unadjusted model table
-adhd_symptoms_unadjusted_table_t2 <- tbl_regression(adhd_symptoms_model_unadjusted_t2, label = injury_type ~ "ADHD symptoms score") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 1 table
-adhd_symptoms_adjusted_table_model1_t2 <- tbl_regression(adhd_symptoms_model_adjusted1_t2,
-                                                            pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                            include = injury_type, 
-                                                            label = injury_type ~ "ADHD symptoms score") %>% 
-  bold_labels() %>%
-  italicize_levels() %>%
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 2 table
-adhd_symptoms_adjusted_table_model2_t2 <- tbl_regression(adhd_symptoms_model_adjusted2_t2, 
-                                                            pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                            include = injury_type, 
-                                                            label = injury_type ~ "ADHD symptoms score") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Merge unadjusted, adjusted model 1 and adjusted model 2 tables
-table_merge_adhd_symptoms_t2 <- tbl_merge(tbls = list(adhd_symptoms_unadjusted_table_t2, adhd_symptoms_adjusted_table_model1_t2, adhd_symptoms_adjusted_table_model2_t2),
-                                             tab_spanner = c("**Unadjusted**","**Adjusted, model 1**", "**Adjusted, model 2**"))
-
-# ODD symptoms at 2-year follow-up 
-#
-
-# Create unadjusted model table
-odd_symptoms_unadjusted_table_t2 <- tbl_regression(odd_symptoms_model_unadjusted_t2, label = injury_type ~ "ODD symptoms score") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 1 table
-odd_symptoms_adjusted_table_model1_t2 <- tbl_regression(odd_symptoms_model_adjusted1_t2, 
-                                                           pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                           include = injury_type, 
-                                                           label = injury_type ~ "ODD symptoms score") %>% 
-  bold_labels() %>%
-  italicize_levels() %>%
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 2 table
-odd_symptoms_adjusted_table_model2_t2 <- tbl_regression(odd_symptoms_model_adjusted2_t2,  
-                                                           pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                           include = injury_type, 
-                                                           label = injury_type ~ "ODD symptoms score") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Merge unadjusted, adjusted model 1 and adjusted model 2 tables
-table_merge_odd_symptoms_t2 <- tbl_merge(tbls = list(odd_symptoms_unadjusted_table_t2, odd_symptoms_adjusted_table_model1_t2, odd_symptoms_adjusted_table_model2_t2),
-                                            tab_spanner = c("**Unadjusted**","**Adjusted, model 1**", "**Adjusted, model 2**"))
-
-# Conduct symptoms at 2-year follow-up 
-#
-
-# Create unadjusted model table
-conduct_symptoms_unadjusted_table_t2 <- tbl_regression(conduct_symptoms_model_unadjusted_t2, label = injury_type ~ "Conduct problems score") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 1 table
-conduct_symptoms_adjusted_table_model1_t2 <- tbl_regression(conduct_symptoms_model_adjusted1_t2, 
-                                                               estimate_fun = function(x) style_number(x, digits = 2),
-                                                               include = injury_type, 
-                                                               label = injury_type ~ "Conduct problems score") %>% 
-  bold_labels() %>%
-  italicize_levels() %>%
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 2 table
-conduct_symptoms_adjusted_table_model2_t2 <- tbl_regression(conduct_symptoms_model_adjusted2_t2, 
-                                                               pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                               include = injury_type, 
-                                                               label = injury_type ~ "Conduct problems score") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Merge unadjusted, adjusted model 1 and adjusted model 2 tables
-table_merge_conduct_symptoms_t2 <- tbl_merge(tbls = list(conduct_symptoms_unadjusted_table_t2, conduct_symptoms_adjusted_table_model1_t2, conduct_symptoms_adjusted_table_model2_t2),
-                                                tab_spanner = c("**Unadjusted**","**Adjusted, model 1**", "**Adjusted, model 2**"))
-
-# Create table for CBCL symptom subscales at 2-year follow-up 
-#
-
-# Merge internalising, externalising, anxiety, depression, ADHD, ODD and conduct symptom tables
-cbcl_symptoms_t2_table <- tbl_stack(tbls = list(table_merge_cbcl_int_symptoms_t2, table_merge_cbcl_ext_symptoms_t2, table_merge_anxiety_symptoms_t2, table_merge_depression_symptoms_t2, table_merge_adhd_symptoms_t2, table_merge_conduct_symptoms_t2, table_merge_odd_symptoms_t2)) %>%
-  modify_caption("**Supplementary Table 2. Association between mental health symptoms at age 11-12 and new mTBI / orthopaedic injury in the previous 24 months**")
-
-# Save table 
-table_1_filename = paste(output_dir, "imputed_cbcl_subscale_symptoms_t2.html", sep="")
-gt::gtsave(as_gt(cbcl_symptoms_t2_table), file = table_1_filename)
-head(table_1_filename)
 
 
 # Display R version and package versions

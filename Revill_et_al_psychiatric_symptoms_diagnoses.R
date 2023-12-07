@@ -2261,3 +2261,32 @@ cbcl_symptoms_t2_table <- tbl_stack(tbls = list(table_merge_cbcl_int_symptoms_t2
 table_1_filename = paste(output_dir, "imputed_cbcl_subscale_symptoms_t2.html", sep="")
 gt::gtsave(as_gt(cbcl_symptoms_t2_table), file = table_1_filename)
 head(table_1_filename)
+
+
+# Display R version and package versions
+
+version
+
+print_package_version <- function(package_name) {
+  
+  sprintf("Package version for %s is %s", package_name, packageVersion(package_name)) # for meta analysis
+  
+}
+
+print_package_version("readr")
+print_package_version("dplyr")
+print_package_version("tidyr")
+print_package_version("survey")
+print_package_version("lme4")
+print_package_version("Hmisc")
+print_package_version("table1")
+print_package_version("epiR")
+print_package_version("jtools")
+print_package_version("gtsummary")
+print_package_version("gt")
+print_package_version("afex")
+print_package_version("missForest")
+print_package_version("doParallel")
+print_package_version("visdat")
+print_package_version("doRNG")
+print_package_version("ggplot2")
