@@ -28,7 +28,7 @@ This study used data from the [Adolescent Brain Cognitive Development Study](htt
 
 The ABCD Study is a "prospective longitudinal study starting at the ages of 9-10 and following participants for 10 years. The study includes a diverse sample of nearly 12,000 youth enrolled at 21 research sites across the USA. It measures brain development (via structural, task functional, and resting state functional imaging), social, emotional, and cognitive development, mental health, substance use and attitudes, gender identity and sexual health, biospecimens, as well as a variety of physical health, and environmental factors."
 
-The data can be download from the NIMH [ABCD Data Repository](https://nda.nih.gov/abcd).
+The data can be downloaded from the NIMH [ABCD Data Repository](https://nda.nih.gov/abcd).
 
 ### Platform and package versions
 
