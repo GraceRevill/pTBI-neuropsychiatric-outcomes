@@ -1,6 +1,6 @@
 Analysis code and results for the study
 
-# Mild Traumatic Brain Injury but not Orthopaedic Injury Associated with Subsequent Psychiatric Problems and Increased Mental Health Service Use in 9 to 12-Year-Old Children
+# Mild Traumatic Brain Injury but not Orthopaedic Injury is Associated with Subsequent Psychiatric Problems and Increased Mental Health Service Use in 9 to 12-Year-Old Children
 
 <p align="center">
 	<a href="https://en.wikipedia.org/wiki/R_(programming_language)"><img
@@ -13,7 +13,7 @@ Analysis code and results for the study
 
 Published as: 
 
-> Revill, G., Poole, N., Carlisi, C., David, A., Bell, V. (2023). Mild Traumatic Brain Injury but not Orthopaedic Injury Associated with Subsequent Psychiatric Problems and Increased Mental Health Service Use in 9 to 12-Year-Old Children. Awaiting pre-print.
+> Revill, G., Poole, N., Carlisi, C., David, A., Bell, V. (2023). Mild Traumatic Brain Injury but not Orthopaedic Injury is Associated with Subsequent Psychiatric Problems and Increased Mental Health Service Use in 9 to 12-Year-Old Children. Awaiting pre-print.
 
 This archive contains the [R code](https://en.wikipedia.org/wiki/R_(programming_language)) for the analysis reported in the above study. 
 
