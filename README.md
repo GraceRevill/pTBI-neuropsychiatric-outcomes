@@ -30,3 +30,28 @@ The ABCD Study is a "prospective longitudinal study starting at the ages of 9-10
 
 The data can be download from the NIMH [ABCD Data Repository](https://nda.nih.gov/abcd).
 
+### Platform and package versions
+
+R language version, and package versions used to generate the results are:
+
+R Version 4.2.1
+Platform x86_64 Windows
+
+Package version for readr is 2.1.4
+Package version for dplyr is 1.1.2
+Package version for tidyr is 1.3.0
+Package version for survey is 4.0
+Package version for lme4 is 1.1.32
+Package version for Hmisc is 5.0.1
+Package version for table1 is 1.4.3
+Package version for epiR is 2.0.61
+Package version for jtools is 2.2.1
+Package version for gtsummary is 1.7.1
+Package version for gt is 0.9.0
+Package version for afex is 1.3.0
+Package version for missForest is 1.5
+Package version for doParallel is 1.0.17
+Package version for visdat is 0.6.0
+Package version for doRNG is 1.8.6
+Package version for ggplot2 is 3.3.5
+
