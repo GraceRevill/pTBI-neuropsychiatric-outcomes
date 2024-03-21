@@ -55,4 +55,5 @@ Package version for doParallel is 1.0.17<br>
 Package version for visdat is 0.6.0<br>
 Package version for doRNG is 1.8.6<br>
 Package version for ggplot2 is 3.3.5<br>
-
+Package version for MatchIt is 4.5.5<br>
+Package version for sjPlot is 2.8.14<br>
