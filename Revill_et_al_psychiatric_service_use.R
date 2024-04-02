@@ -2,9 +2,8 @@
 #
 # Analysis of psychiatric service use from the study:
 #
-# Mild TBI but not Orthopaedic Injury Associated with Subsequent
-# Psychiatric Problems and Increased Mental Health Service Use in
-# 9-12-year-old Children
+# Association Between Paediatric Mild Traumatic Brain Injury and Two-Year 
+# Psychiatric Outcomes Largely Explained by Pre-existing Mental Health Problems
 #
 # Revill et al
 #
@@ -478,9 +477,7 @@ psyc_data <- tbi_baseline %>%
 
 # Merge 2-year follow-up files
 psyc_data_t2 <- tbi_1_year %>%
-  left_join(tbi_baseline, by = "subjectkey") %>%
   left_join(tbi_2_year, by = "subjectkey") %>%
-  left_join(oi_baseline, by = "subjectkey") %>%
   left_join(oi_1_year, by = "subjectkey") %>%
   left_join(oi_2_year, by = "subjectkey") %>%
   left_join(psyc_services_2_year, by = "subjectkey") %>%
@@ -492,21 +489,6 @@ psyc_data_t2 <- tbi_1_year %>%
   left_join(neighbourhood_safety_baseline, by = "subjectkey") %>%
   left_join(family_conflict_baseline, by = "subjectkey") %>%
   unique()
-
-
-##############################################################################
-#
-# Remove baseline interview age and sex variables for 2-year follow-up data
-#
-#############################################################################
-
-# Remove age and sex duplicates
-psyc_data_t2 <- subset(psyc_data_t2, select = -c(interview_age.x, sex.y))
-
-# Rename interview age and sex variables at 2-year follow-up 
-psyc_data_t2 <- psyc_data_t2 %>%
-  rename(interview_age = interview_age.y) %>%
-  rename(sex = sex.x)  
 
 ##############################################################################
 #
@@ -527,8 +509,7 @@ psyc_data$injury_type[psyc_data$injury_type == 'Yes Yes'] <- 2
 psyc_data$injury_type <- factor(psyc_data$injury_type, levels = c(2,1,0), labels = c("TBI", "Ortho", "None" ))
 
 # Combine TBI cases from 1- and 2-year follow-up 
-#
-# Create column merging TBI at 1 and 2-year follow-up 
+# Create column
 psyc_data_t2$tbi_both_years <- paste(psyc_data_t2$tbi_severity_1_year, psyc_data_t2$tbi_severity_2_year)
 
 # Recode column 
@@ -543,27 +524,8 @@ psyc_data_t2$tbi_both_years[psyc_data_t2$tbi_both_years == 'Yes Yes'] <- 1
 # Set data type and level labels
 psyc_data_t2$tbi_both_years <- factor(psyc_data_t2$tbi_both_years, levels = c(1,0), labels = c("Yes", "No" ))
 
-# Create column merging TBI at baseline, 1 and 2 year follow-up 
-psyc_data_t2$tbi_both_years <- paste(psyc_data_t2$tbi_severity, psyc_data_t2$tbi_both_years)
-
-# Recode column so that TBI at baseline is removed (only new cases included)
-psyc_data_t2$tbi_both_years[psyc_data_t2$tbi_both_years == 'No No'] <- 0
-psyc_data_t2$tbi_both_years[psyc_data_t2$tbi_both_years == 'No NA'] <- 0
-psyc_data_t2$tbi_both_years[psyc_data_t2$tbi_both_years == 'NA No'] <- 0
-psyc_data_t2$tbi_both_years[psyc_data_t2$tbi_both_years == 'Yes NA'] <- 0
-psyc_data_t2$tbi_both_years[psyc_data_t2$tbi_both_years == 'NA Yes'] <- 1
-psyc_data_t2$tbi_both_years[psyc_data_t2$tbi_both_years == 'Yes No'] <- 0
-psyc_data_t2$tbi_both_years[psyc_data_t2$tbi_both_years == 'No Yes'] <- 1
-psyc_data_t2$tbi_both_years[psyc_data_t2$tbi_both_years == 'Yes Yes'] <- NA
-
-# Set data type and level labels
-psyc_data_t2$tbi_both_years <- factor(psyc_data_t2$tbi_both_years, levels = c(1,0), labels = c("Yes", "No" ))
-
-# Check if variabe is coded correctly 
-xtabs(~ tbi_both_years, data = psyc_data_t2)
-
-
-# Create column merging broken bones at 1 and 2-year follow-up 
+# Combine ortho injury cases from 1- and 2-year follow-up 
+# Create column
 psyc_data_t2$broken_bones_both_years <- paste(psyc_data_t2$broken_bones_1_year, psyc_data_t2$broken_bones_2_year)
 
 # Recode column 
@@ -575,23 +537,6 @@ psyc_data_t2$broken_bones_both_years[psyc_data_t2$broken_bones_both_years == 'NA
 psyc_data_t2$broken_bones_both_years[psyc_data_t2$broken_bones_both_years == 'Yes No'] <- 1
 psyc_data_t2$broken_bones_both_years[psyc_data_t2$broken_bones_both_years == 'No Yes'] <- 1
 psyc_data_t2$broken_bones_both_years[psyc_data_t2$broken_bones_both_years == 'Yes Yes'] <- 1
-
-# Set data type and level labels
-psyc_data_t2$broken_bones_both_years <- factor(psyc_data_t2$broken_bones_both_years, levels = c(1,0), labels = c("Yes", "No" ))
-
-
-# Create column merging OI at baseline, 1-year and 2-year follow-up 
-psyc_data_t2$broken_bones_both_years <- paste(psyc_data_t2$broken_bones, psyc_data_t2$broken_bones_both_years)
-
-# Recode column so that OI at baseline is not included (only new cases included)
-psyc_data_t2$broken_bones_both_years[psyc_data_t2$broken_bones_both_years == 'No No'] <- 0
-psyc_data_t2$broken_bones_both_years[psyc_data_t2$broken_bones_both_years == 'NA No'] <- 0
-psyc_data_t2$broken_bones_both_years[psyc_data_t2$broken_bones_both_years == 'No NA'] <- 0
-psyc_data_t2$broken_bones_both_years[psyc_data_t2$broken_bones_both_years == 'Yes NA'] <- 0
-psyc_data_t2$broken_bones_both_years[psyc_data_t2$broken_bones_both_years == 'NA Yes'] <- 1
-psyc_data_t2$broken_bones_both_years[psyc_data_t2$broken_bones_both_years == 'Yes No'] <- 0
-psyc_data_t2$broken_bones_both_years[psyc_data_t2$broken_bones_both_years == 'No Yes'] <- 1
-psyc_data_t2$broken_bones_both_years[psyc_data_t2$broken_bones_both_years == 'Yes Yes'] <- NA
 
 # Set data type and level labels
 psyc_data_t2$broken_bones_both_years <- factor(psyc_data_t2$broken_bones_both_years, levels = c(1,0), labels = c("Yes", "No" ))
@@ -610,7 +555,6 @@ psyc_data_t2$injury_type[psyc_data_t2$injury_type == 'Yes NA'] <- 2
 
 # Set data type and level labels
 psyc_data_t2$injury_type <- factor(psyc_data_t2$injury_type, levels = c(2, 1,0), labels = c("TBI", "Ortho", "None" ))
-
 
 ##############################################################################
 #
@@ -652,23 +596,6 @@ gt::gtsave(as_gt(descriptive_table), file = table_1_filename)
 display_html(file=table_1_filename)
 head(table_1_filename)
 
-
-# Create table showing percentages of service use at baseline  
-psyc_service_percentage_table <- psyc_data %>%
-  select(injury_type, any_support, outpatient, inpatient, psychotherapy, medication) %>%
-  tbl_summary(by = injury_type) %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_spanning_header(all_stat_cols() ~ "**Injury type**") %>%
-  modify_caption("**Table 1. Proportions and percentages of psychiatric service use at baseline**")
-
-# Save table
-table_1_filename = paste(output_dir, "psyc_use_percentage_baseline.html", sep="")
-gt::gtsave(as_gt(psyc_service_percentage_table), file = table_1_filename)
-display_html(file=table_1_filename)
-head(table_1_filename)
-
-
 # Rename 2-year follow-up variables for better readability 
 label(psyc_data_t2$interview_age) <- "Age"
 label(psyc_data_t2$sex) <- "Sex"
@@ -684,26 +611,9 @@ label(psyc_data_t2$safety) <- "Neighbourhood safety"
 label(psyc_data_t2$family_conflict_scale) <- "Family conflict scale"
 label(psyc_data_t2$psychotherapy_medication) <- "Psychotherapy or medication management"
 
-
-
-# Create table showing percentages of service use at 2-year follow-up  
-psyc_service_percentage_table_t2 <- psyc_data_t2 %>%
-  select(injury_type, any_support, outpatient, inpatient, psychotherapy, medication) %>%
-  tbl_summary(by = injury_type) %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_spanning_header(all_stat_cols() ~ "**Injury type**") %>%
-  modify_caption("**Table 1. Proportions and percentages of psychiatric service use at two-year follow-up**")
-
-# Save table
-table_1_filename = paste(output_dir, "psyc_use_percentage_t2.html", sep="")
-gt::gtsave(as_gt(psyc_service_percentage_table_t2), file = table_1_filename)
-display_html(file=table_1_filename)
-head(table_1_filename)
-
 ##############################################################################
 #
-# Multiple imputation using missForest package
+# Multiple imputation for missing covariates using missForest package
 #
 #############################################################################
 
@@ -727,13 +637,10 @@ imputed_data <- select(psyc_data,
                        safety, family_conflict_scale, tbi_severity, broken_bones, site_id_l, injury_type,
                        any_support, outpatient, inpatient, medication, psychotherapy, psychotherapy_medication)
 
-# Store subject key
-id_sk <- select(imputed_data, subjectkey)
-
-# Remove it from imputed_data to not impute it
+# Make sure subject ID is not imputed 
 imputed_data$subjectkey <- NULL 
 
-# Create imputed dataframe 
+# Create imputed DataFrame 
 imputed_data <- as.data.frame(imputed_data)
 
 # Visualise missing data 
@@ -741,14 +648,12 @@ options(repr.plot.width = 10, repr.plot.height = 10, repr.plot.res = 200)
 vis_miss(imputed_data, sort_miss = TRUE, warn_large_data = FALSE)
 ggsave(paste(output_dir, "missing_psych_service_1.png", sep = ""))
 
-
-set.seed(123)
-
 # Record start time 
 start_time <- Sys.time() 
 
-# Impute missing data
-imputed_data_baseline <- missForest(imputed_data, parallelize = "forests")
+# Impute covariates but not outcomes  
+set.seed(123)
+imputed_data_baseline <- missForest(imputed_data[c(1:12)])
 
 # Record end time 
 end_time <- Sys.time() 
@@ -761,14 +666,10 @@ imputed_data_baseline$OOBerror
 
 # Create data frame with imputed covariates and outcomes 
 imputed_data_baseline <- imputed_data_baseline$ximp 
-
-# Restore subject key
-imputed_data_baseline$subject_key <- id_sk$subjectkey
+imputed_data_baseline <- data.frame(imputed_data[13:18], imputed_data_baseline)
 
 # Save new file for analyses 
 write.csv(imputed_data_baseline, paste(output_dir, "imputed_baseline_psyc_services.csv", sep = ""))
-
-
 
 # Impute 2-year follow-up dataset
 #
@@ -791,13 +692,10 @@ imputed_data_2 <- select(psyc_data_t2,
                        broken_bones_both_years,
                        any_support, outpatient, inpatient, medication, psychotherapy, psychotherapy_medication)
 
-# Store subject key
-id_sk <- select(imputed_data_2, subjectkey)
-
 # Make sure subject ID is not imputed 
 imputed_data_2$subjectkey <- NULL 
 
-# Create imputed dataframe 
+# Create imputed DataFrame 
 imputed_data_2 <- as.data.frame(imputed_data_2)
 
 # Visualise missing data 
@@ -805,13 +703,12 @@ options(repr.plot.width = 10, repr.plot.height = 10, repr.plot.res = 200)
 vis_miss(imputed_data_2, sort_miss = TRUE, warn_large_data = FALSE)
 ggsave(paste(output_dir, "missing_psych_service_2.png", sep = ""))
 
-set.seed(123)
-
 # Record start time 
 start_time <- Sys.time() 
 
-# Impute missing data 
-imputed_data_t2 <- missForest(imputed_data_2, parallelize = "forests")
+# Impute covariates but not outcomes  
+set.seed(123)
+imputed_data_t2 <- missForest(imputed_data_2[c(1:12)])
 
 # Record end time 
 end_time <- Sys.time() 
@@ -824,9 +721,7 @@ imputed_data_t2$OOBerror
 
 # Create data frame with imputed covariates and outcomes  
 imputed_data_t2 <- imputed_data_t2$ximp 
-
-# Restore subject key
-imputed_data_t2$subject_key <- id_sk$subjectkey
+imputed_data_t2 <- data.frame(imputed_data_2[13:18], imputed_data_t2)
 
 # Save new file for analyses 
 write.csv(imputed_data_t2, paste(output_dir, "imputed_t2_psyc_services.csv", sep = ""))
@@ -1736,166 +1631,30 @@ gt::gtsave(as_gt(psyc_service_t2_table), file = table_2_filename)
 head(table_2_filename)
 
 
-# Create outpatient and inpatient tables 
+# Display R version and package versions
 
-# Outpatient measured at baseline
-#
+version
 
-# Create unadjusted model table
-outpatient_unadjusted_table <- tbl_regression(outpatient_model_unadjusted, exponentiate = TRUE, 
-                                              label = injury_type ~ "Outpatient") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
+print_package_version <- function(package_name) {
+  
+  sprintf("Package version for %s is %s", package_name, packageVersion(package_name)) # for meta analysis
+  
+}
 
-# Create adjusted model 1 table
-outpatient_adjusted_table_short_model1 <- tbl_regression(outpatient_model_adjusted1, exponentiate = TRUE, 
-                                                         pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                         include = injury_type,
-                                                         label = injury_type ~ "Outpatient") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 2 table
-outpatient_adjusted_table_short_model2 <- tbl_regression(outpatient_model_adjusted2, exponentiate = TRUE, 
-                                                         pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                         include = injury_type,
-                                                         label = injury_type ~ "Outpatient") %>%
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Merge unadjusted, adjusted model 1 and adjusted model 2 tables
-table_merge_outpatient_short <- tbl_merge(tbls = list(outpatient_unadjusted_table, outpatient_adjusted_table_short_model1, outpatient_adjusted_table_short_model2),
-                                          tab_spanner = c("**Unadjusted**","**Adjusted, model 1**", "**Adjusted, model 2**"))
-
-
-# Create unadjusted model table
-inpatient_unadjusted_table <- tbl_regression(inpatient_model_unadjusted, exponentiate = TRUE, 
-                                              label = injury_type ~ "Inpatient") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 1 table
-inpatient_adjusted_table_short_model1 <- tbl_regression(inpatient_model_adjusted1, exponentiate = TRUE, 
-                                                         pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                         include = injury_type,
-                                                         label = injury_type ~ "Inpatient") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 2 table
-inpatient_adjusted_table_short_model2 <- tbl_regression(inpatient_model_adjusted2, exponentiate = TRUE, 
-                                                         pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                         include = injury_type,
-                                                         label = injury_type ~ "Inpatient") %>%
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Merge unadjusted, adjusted model 1 and adjusted model 2 tables
-table_merge_inpatient_short <- tbl_merge(tbls = list(inpatient_unadjusted_table, inpatient_adjusted_table_short_model1, inpatient_adjusted_table_short_model2),
-                                          tab_spanner = c("**Unadjusted**","**Adjusted, model 1**", "**Adjusted, model 2**"))
-
-
-# 2-year follow-up 
-
-# Outpatient
-# Create unadjusted model table
-outpatient_unadjusted_table_t2 <- tbl_regression(outpatient_model_unadjusted_t2, exponentiate = TRUE, label = injury_type ~ "Outpatient") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 1 table
-outpatient_adjusted_table_short_model1_t2 <- tbl_regression(outpatient_model_adjusted1_t2, exponentiate = TRUE, 
-                                                             pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                             include = injury_type, 
-                                                             label = injury_type ~ "Outpatient") %>% 
-  bold_labels() %>%
-  italicize_levels() %>%
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 2 table
-outpatient_adjusted_table_short_model2_t2 <- tbl_regression(outpatient_model_adjusted2_t2, exponentiate = TRUE, 
-                                                             pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                             include = injury_type, 
-                                                             label = injury_type ~ "Outpatient") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Merge unadjusted, adjusted model 1 and adjusted model 2 tables
-table_merge_outpatient_short_t2 <- tbl_merge(tbls = list(outpatient_unadjusted_table_t2, outpatient_adjusted_table_short_model1_t2, outpatient_adjusted_table_short_model2_t2),
-                                              tab_spanner = c("**Unadjusted**","**Adjusted, model 1**", "**Adjusted, model 2**"))
-
-
-# Inpatient
-# Create unadjusted model table
-inpatient_unadjusted_table_t2 <- tbl_regression(inpatient_model_unadjusted_t2, exponentiate = TRUE, label = injury_type ~ "Inpatient") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 1 table
-inpatient_adjusted_table_short_model1_t2 <- tbl_regression(inpatient_model_adjusted1_t2, exponentiate = TRUE, 
-                                                            pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                            include = injury_type, 
-                                                            label = injury_type ~ "Inpatient") %>% 
-  bold_labels() %>%
-  italicize_levels() %>%
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Create adjusted model 2 table
-inpatient_adjusted_table_short_model2_t2 <- tbl_regression(inpatient_model_adjusted2_t2, exponentiate = TRUE, 
-                                                            pvalue_fun = function(x) style_pvalue(x, digits = 2),
-                                                            include = injury_type, 
-                                                            label = injury_type ~ "Inpatient") %>% 
-  remove_row_type(variable = injury_type, type = 'reference') %>%
-  bold_labels() %>%
-  italicize_levels() %>%
-  modify_column_merge(pattern = "{estimate} ({ci}) [{p.value}]", rows = !is.na(estimate))
-
-# Merge unadjusted, adjusted model 1 and adjusted model 2 tables
-table_merge_inpatient_short_t2 <- tbl_merge(tbls = list(inpatient_unadjusted_table_t2, inpatient_adjusted_table_short_model1_t2, inpatient_adjusted_table_short_model2_t2),
-                                             tab_spanner = c("**Unadjusted**","**Adjusted, model 1**", "**Adjusted, model 2**"))
-
-
-# Create table for outpatient and inpatient at baseline
-#
-
-# Merge  outpatient and inpatient tables 
-outpatient_inpatient_baseline_table <- tbl_stack(tbls = list(table_merge_outpatient_short, table_merge_inpatient_short)) %>%
-  modify_caption("**Table 4. Association between history of mTBI / orthopaedic injury and mental health service use at baseline (age 9-10)**")
-
-# Save table 
-table_2_filename = paste(output_dir, "oupatient_inpatient_baseline.html", sep="")
-gt::gtsave(as_gt(outpatient_inpatient_baseline_table), file = table_2_filename)
-head(table_2_filename)
-
-
-# # Create table for outpatient and inpatient at 2-year follow-up
-#
-
-# Merge  outpatient and inpatient tables 
-outpatient_inpatient_t2_table <- tbl_stack(tbls = list(table_merge_outpatient_short_t2, table_merge_inpatient_short_t2)) %>%
-  modify_caption("**Table 5. Association between new mTBI / orthopaedic injury and mental health service use in the 12-24 months following baseline (age 11-12)**")
-
-# Save table 
-table_2_filename = paste(output_dir, "outpatient_inpatient_t2.html", sep="")
-gt::gtsave(as_gt(outpatient_inpatient_t2_table), file = table_2_filename)
-head(table_2_filename)
+print_package_version("readr")
+print_package_version("dplyr")
+print_package_version("tidyr")
+print_package_version("survey")
+print_package_version("lme4")
+print_package_version("Hmisc")
+print_package_version("table1")
+print_package_version("epiR")
+print_package_version("jtools")
+print_package_version("gtsummary")
+print_package_version("gt")
+print_package_version("afex")
+print_package_version("missForest")
+print_package_version("doParallel")
+print_package_version("visdat")
+print_package_version("doRNG")
+print_package_version("ggplot2")
