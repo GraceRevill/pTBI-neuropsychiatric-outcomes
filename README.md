@@ -22,9 +22,9 @@ This repository contains:
 
 1.  [Revill_et_al_psychiatric_symptoms_diagnoses.R](https://github.com/GraceRevill/pTBI-neuropsychiatric-outcomes/blob/main/Revill_et_al_psychiatric_symptoms_diagnoses.R) - R script to complete the psychiatric diagnosis and scales outcomes analysis
 2.  [Revill_et_al_psychiatric_service_use.R](https://github.com/GraceRevill/pTBI-neuropsychiatric-outcomes/blob/main/Revill_et_al_psychiatric_service_use.R) - R script to complete the psychiatric services use analysis
-3.  [Revill_et_al_psm_matchit_code.R](https://github.com/GraceRevill/pTBI-neuropsychiatric-outcomes/blob/main/Revill_et_al_psm_matchit_code.R) - R script to complete propensity score matching analysis
-4.   - Supplementary analysis comparing 1:1 vs 2:1 propensity score matching
-5.   - Output
+3.  [Revill_et_al_2_1_psm_matchit_code.R](https://github.com/GraceRevill/pTBI-neuropsychiatric-outcomes/blob/main/Revill_et_al_2_1_psm_matchit_code.R) - R script to complete propensity score matching analysis
+4.  [Revill_et_al_supple_psm_matchit_code.R] (https://github.com/GraceRevill/pTBI-neuropsychiatric-outcomes/blob/main/Revill_et_al_supple_psm_matchit_code.R) - Supplementary analysis comparing 1:1 vs 2:1 propensity score matching
+
 
 ### Dataset
 
