@@ -3,8 +3,8 @@
 # Analysis of Child Behaviour Checklist (CBCL) and DSM diagnoses
 # outcomes (from KSADS) from the study:
 #
-# Association Between Paediatric Mild Traumatic Brain Injury and Two-Year 
-# Psychiatric Outcomes Largely Explained by Pre-existing Mental Health Problems
+# Only Anxiety Remains Reliably Associated with Paediatric 
+# Mild TBI at Two Years Follow-up after Adjusting for Pre-Existing Mental Health Problems 
 #
 # Revill et al 
 #
@@ -424,7 +424,9 @@ psyc_data <- tbi_baseline %>%
 
 # Merge 2-year follow-up files
 psyc_data_t2 <- tbi_1_year %>%
+  left_join(tbi_baseline, by = "subjectkey") %>%
   left_join(tbi_2_year, by = "subjectkey") %>%
+  left_join(oi_baseline, by = "subjectkey") %>%
   left_join(oi_1_year, by = "subjectkey") %>%
   left_join(oi_2_year, by = "subjectkey") %>%
   left_join(ksad_parent_2_year, by = "subjectkey") %>%
@@ -438,6 +440,20 @@ psyc_data_t2 <- tbi_1_year %>%
   left_join(family_conflict_baseline, by = "subjectkey") %>%
   unique()
 
+
+##############################################################################
+#
+# Remove baseline interview age and sex variables for 2-year follow-up data
+#
+#############################################################################
+
+# Remove age and sex duplicates
+psyc_data_t2 <- subset(psyc_data_t2, select = -c(interview_age.x, sex.y))
+
+# Rename interview age and sex variables at 2-year follow-up 
+psyc_data_t2 <- psyc_data_t2 %>%
+  rename(interview_age = interview_age.y) %>%
+  rename(sex = sex.x)  
 
 ##############################################################################
 #
@@ -459,7 +475,7 @@ psyc_data$injury_type <- factor(psyc_data$injury_type, levels = c(2,1,0), labels
 
 # Combine TBI cases from 1- and 2-year follow-up 
 #
-# Create column
+# Create column merging TBI at 1 and 2-year follow-up 
 psyc_data_t2$tbi_both_years <- paste(psyc_data_t2$tbi_severity_1_year, psyc_data_t2$tbi_severity_2_year)
 
 # Recode column 
@@ -474,9 +490,26 @@ psyc_data_t2$tbi_both_years[psyc_data_t2$tbi_both_years == 'Yes Yes'] <- 1
 # Set data type and level labels
 psyc_data_t2$tbi_both_years <- factor(psyc_data_t2$tbi_both_years, levels = c(1,0), labels = c("Yes", "No" ))
 
-# Combine ortho injury cases from 1- and 2-year follow-up 
-#
-# Create column
+# Create column merging TBI at baseline, 1 and 2 year follow-up 
+psyc_data_t2$tbi_both_years <- paste(psyc_data_t2$tbi_severity, psyc_data_t2$tbi_both_years)
+
+# Recode column so that TBI at baseline is removed (only new cases included)
+psyc_data_t2$tbi_both_years[psyc_data_t2$tbi_both_years == 'No No'] <- 0
+psyc_data_t2$tbi_both_years[psyc_data_t2$tbi_both_years == 'No NA'] <- 0
+psyc_data_t2$tbi_both_years[psyc_data_t2$tbi_both_years == 'NA No'] <- 0
+psyc_data_t2$tbi_both_years[psyc_data_t2$tbi_both_years == 'Yes NA'] <- 0
+psyc_data_t2$tbi_both_years[psyc_data_t2$tbi_both_years == 'NA Yes'] <- 1
+psyc_data_t2$tbi_both_years[psyc_data_t2$tbi_both_years == 'Yes No'] <- 0
+psyc_data_t2$tbi_both_years[psyc_data_t2$tbi_both_years == 'No Yes'] <- 1
+psyc_data_t2$tbi_both_years[psyc_data_t2$tbi_both_years == 'Yes Yes'] <- NA
+
+# Set data type and level labels
+psyc_data_t2$tbi_both_years <- factor(psyc_data_t2$tbi_both_years, levels = c(1,0), labels = c("Yes", "No" ))
+
+# Check if variabe is coded correctly
+xtabs(~ tbi_both_years, data = psyc_data_t2)
+
+# Create column merging broken bones at 1 and 2-year follow-up 
 psyc_data_t2$broken_bones_both_years <- paste(psyc_data_t2$broken_bones_1_year, psyc_data_t2$broken_bones_2_year)
 
 # Recode column 
@@ -488,6 +521,22 @@ psyc_data_t2$broken_bones_both_years[psyc_data_t2$broken_bones_both_years == 'NA
 psyc_data_t2$broken_bones_both_years[psyc_data_t2$broken_bones_both_years == 'Yes No'] <- 1
 psyc_data_t2$broken_bones_both_years[psyc_data_t2$broken_bones_both_years == 'No Yes'] <- 1
 psyc_data_t2$broken_bones_both_years[psyc_data_t2$broken_bones_both_years == 'Yes Yes'] <- 1
+
+# Set data type and level labels
+psyc_data_t2$broken_bones_both_years <- factor(psyc_data_t2$broken_bones_both_years, levels = c(1,0), labels = c("Yes", "No" ))
+
+# Create column merging OI at baseline, 1-year and 2-year follow-up 
+psyc_data_t2$broken_bones_both_years <- paste(psyc_data_t2$broken_bones, psyc_data_t2$broken_bones_both_years)
+
+# Recode column so that OI at baseline is not included (only new cases included)
+psyc_data_t2$broken_bones_both_years[psyc_data_t2$broken_bones_both_years == 'No No'] <- 0
+psyc_data_t2$broken_bones_both_years[psyc_data_t2$broken_bones_both_years == 'NA No'] <- 0
+psyc_data_t2$broken_bones_both_years[psyc_data_t2$broken_bones_both_years == 'No NA'] <- 0
+psyc_data_t2$broken_bones_both_years[psyc_data_t2$broken_bones_both_years == 'Yes NA'] <- 0
+psyc_data_t2$broken_bones_both_years[psyc_data_t2$broken_bones_both_years == 'NA Yes'] <- 1
+psyc_data_t2$broken_bones_both_years[psyc_data_t2$broken_bones_both_years == 'Yes No'] <- 0
+psyc_data_t2$broken_bones_both_years[psyc_data_t2$broken_bones_both_years == 'No Yes'] <- 1
+psyc_data_t2$broken_bones_both_years[psyc_data_t2$broken_bones_both_years == 'Yes Yes'] <- NA
 
 # Set data type and level labels
 psyc_data_t2$broken_bones_both_years <- factor(psyc_data_t2$broken_bones_both_years, levels = c(1,0), labels = c("Yes", "No" ))
@@ -506,6 +555,7 @@ psyc_data_t2$injury_type[psyc_data_t2$injury_type == 'Yes NA'] <- 2
 
 # Set data type and level labels
 psyc_data_t2$injury_type <- factor(psyc_data_t2$injury_type, levels = c(2, 1,0), labels = c("TBI", "Ortho", "None" ))
+
 
 ##############################################################################
 #
@@ -545,11 +595,12 @@ table_1_filename = paste(output_dir, "descriptive_table.html", sep="")
 gt::gtsave(as_gt(descriptive_table), file = table_1_filename)
 head(table_1_filename)
 
+
 # Rename 2-year follow-up variables for better readability 
 label(psyc_data_t2$household_income) <- "Household Income "
 label(psyc_data_t2$sex) <- "Sex"
 label(psyc_data_t2$race_ethnicity) <- "Ethnicity"
-label(psyc_data_t2$interview_age) <- "Age at baseline"
+label(psyc_data_t2$interview_age) <- "Age at follow-up"
 label(psyc_data_t2$advlife_cat) <- "Traumatic events"
 label(psyc_data_t2$safety) <- "Neighbourhood safety"
 label(psyc_data_t2$family_conflict_scale) <- "Family conflict scale"
@@ -567,6 +618,20 @@ label(psyc_data_t2$cbcl_ext_problems) <- "Externalising symptoms scale"
 label(psyc_data_t2$cbcl_tot_problems) <- "Total problems scale"
 
 
+
+# Create demographic and descriptive table for sample 
+descriptive_table_t2 <- psyc_data_t2 %>%
+  select(injury_type, sex, interview_age, race_ethnicity, household_income, safety, family_conflict_scale, advlife_cat) %>%
+  tbl_summary(by = injury_type, type = list(family_conflict_scale ~ 'categorical', advlife_cat ~ 'categorical')) %>%
+  bold_labels() %>%
+  italicize_levels() %>%
+  modify_spanning_header(all_stat_cols() ~ "**Injury type**") %>%
+  modify_caption("**Supplementary Table 1. Demographics and descriptive statistics for the sample at two-year follow-up**")
+
+# Save table
+table_1_filename = paste(output_dir, "descriptive_table_t2.html", sep="")
+gt::gtsave(as_gt(descriptive_table_t2), file = table_1_filename)
+head(table_1_filename)
 
 ##############################################################################
 #
@@ -595,7 +660,10 @@ imputed_data <- select(psyc_data,
                        cbcl_adhd_score, cbcl_odd_score, cbcl_conduct_score, cbcl_int_problems,
                        cbcl_ext_problems, cbcl_tot_problems)
 
-# Make sure subject ID is not imputed 
+# Store subject key
+id_sk <- select(imputed_data, subjectkey)
+
+# Remove it from imputed_data to not impute it
 imputed_data$subjectkey <- NULL 
 
 # Create imputed dataframe 
@@ -606,14 +674,14 @@ options(repr.plot.width = 10, repr.plot.height = 10, repr.plot.res = 200)
 vis_miss(imputed_data, sort_miss = TRUE, warn_large_data = FALSE)
 ggsave(paste(output_dir, "missing_psych_symptoms_1.png", sep = ""))
 
-         
+
 set.seed(123)
 
 # Record start time 
 start_time <- Sys.time() 
 
-# Impute covariates but not outcomes  
-imputed_data_baseline <- missForest(imputed_data[c(1:12)])
+# Impute missing data
+imputed_data_baseline <- missForest(imputed_data, parallelize = "forests")
 
 # Record end time 
 end_time <- Sys.time() 
@@ -626,7 +694,9 @@ imputed_data_baseline$OOBerror
 
 # Create data frame with imputed covariates and outcomes 
 imputed_data_baseline <- imputed_data_baseline$ximp 
-imputed_data_baseline <- data.frame(imputed_data[13:22], imputed_data_baseline)
+
+# Restore subject key
+imputed_data_baseline$subject_key <- id_sk$subjectkey
 
 # Save new file for analyses 
 write.csv(imputed_data_baseline, paste(output_dir, "imputed_baseline_KSAD_CBCL.csv", sep = ""))
@@ -651,6 +721,8 @@ imputed_data_2 <- select(psyc_data_t2,
                          anxiety_disorders, behavioural_disorders, cbcl_anx_score, cbcl_dep_score,
                          cbcl_adhd_score, cbcl_odd_score, cbcl_conduct_score, cbcl_int_problems,
                          cbcl_ext_problems, cbcl_tot_problems)
+# Store subject key
+id_sk <- select(imputed_data_2, subjectkey)
 
 # Make sure subject ID is not imputed 
 imputed_data_2$subjectkey <- NULL 
@@ -668,8 +740,8 @@ set.seed(123)
 # Record start time 
 start_time <- Sys.time() 
 
-# Impute covariates but not outcomes  
-imputed_data_t2 <- missForest(imputed_data_2[c(1:12)])
+# Impute missing data 
+imputed_data_t2 <- missForest(imputed_data_2, parallelize = "forests")
 
 # Record end time 
 end_time <- Sys.time() 
@@ -682,7 +754,9 @@ imputed_data_t2$OOBerror
 
 # Create data frame with imputed covariates and outcomes  
 imputed_data_t2 <- imputed_data_t2$ximp 
-imputed_data_t2 <- data.frame(imputed_data_2[13:22], imputed_data_t2)
+
+# Restore subject key
+imputed_data_t2$subject_key <- id_sk$subjectkey
 
 # Save new file for analyses 
 write.csv(imputed_data_t2, paste(output_dir, "imputed_t2_KSAD_CBCL.csv", sep = ""))
@@ -698,6 +772,7 @@ imputed_data_baseline <- read.csv(paste(output_dir, "imputed_baseline_KSAD_CBCL.
 
 # Load imputed dataset for 2-year follow-up 
 imputed_data_t2 <- read.csv(paste(output_dir, "imputed_t2_KSAD_CBCL.csv", sep = ""))
+
 
 ##############################################################################
 #
@@ -910,6 +985,7 @@ behavioural_disorders_model_adjusted2_t2 <- glmer(behavioural_disorders ~ injury
                                                family = binomial(link = "logit"),
                                                control = glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
 )
+
 
 ##############################################################################
 #
@@ -1132,6 +1208,8 @@ cbcl_tot_symptoms_model_adjusted2_t2 <- lmer(cbcl_tot_problems ~ injury_type +
                                           data = imputed_data_t2, 
                                           control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
 )
+
+
 
 
 ##############################################################################
@@ -1500,6 +1578,7 @@ conduct_symptoms_model_adjusted2_t2 <- lmer(cbcl_conduct_score ~ injury_type +
                                          data = imputed_data_t2, 
                                          control = lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=10000000))
 )
+
 
 
 ##############################################################################
@@ -2262,30 +2341,5 @@ gt::gtsave(as_gt(cbcl_symptoms_t2_table), file = table_1_filename)
 head(table_1_filename)
 
 
-# Display R version and package versions
 
-version
 
-print_package_version <- function(package_name) {
-  
-  sprintf("Package version for %s is %s", package_name, packageVersion(package_name)) # for meta analysis
-  
-}
-
-print_package_version("readr")
-print_package_version("dplyr")
-print_package_version("tidyr")
-print_package_version("survey")
-print_package_version("lme4")
-print_package_version("Hmisc")
-print_package_version("table1")
-print_package_version("epiR")
-print_package_version("jtools")
-print_package_version("gtsummary")
-print_package_version("gt")
-print_package_version("afex")
-print_package_version("missForest")
-print_package_version("doParallel")
-print_package_version("visdat")
-print_package_version("doRNG")
-print_package_version("ggplot2")
