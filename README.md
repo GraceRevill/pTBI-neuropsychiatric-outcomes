@@ -1,6 +1,6 @@
 Analysis code and results for the study
 
-#  Only Anxiety Remains Reliably Associated with Paediatric Mild Traumatic Brain Injury at Two Years Follow-up After Adjusting for Pre-Existing Mental Health
+#  Only Anxiety Remains Reliably Associated with New Paediatric Mild Traumatic Brain Injury at Two Years Follow-up After Adjusting for Pre-Existing Mental Health
 
 
 <p align="center">
