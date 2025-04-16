@@ -23,7 +23,9 @@ This repository contains:
 1.  [Revill_et_al_psychiatric_symptoms_diagnoses.R](https://github.com/GraceRevill/pTBI-neuropsychiatric-outcomes/blob/main/Revill_et_al_psychiatric_symptoms_diagnoses.R) - R script to complete the psychiatric diagnosis and scales outcomes analysis
 2.  [Revill_et_al_psychiatric_service_use.R](https://github.com/GraceRevill/pTBI-neuropsychiatric-outcomes/blob/main/Revill_et_al_psychiatric_service_use.R) - R script to complete the psychiatric services use analysis
 3.  [Revill_et_al_2_1_psm_matchit_code.R](https://github.com/GraceRevill/pTBI-neuropsychiatric-outcomes/blob/main/Revill_et_al_2_1_psm_matchit_code.R) - R script to complete propensity score matching analysis
-4.  [Revill_et_al_supple_psm_matchit_code.R](https://github.com/GraceRevill/pTBI-neuropsychiatric-outcomes/blob/main/Revill_et_al_supple_psm_matchit_code.R) - Supplementary analysis comparing 1:1 vs 2:1 propensity score matching
+4.  [Revill_et_al_senspoweranalysis_mTBI_v_ortho.R](https://github.com/GraceRevill/pTBI-neuropsychiatric-outcomes/blob/main/Revill_et_al_senspoweranalysis_mTBI_v_ortho.R) - R script to calculate sensitivity power analysis for mTBI vs orthopaedic controls
+5.  [Revill_et_al_senspoweranalysis_mTBI_v_uninjured.R](https://github.com/GraceRevill/pTBI-neuropsychiatric-outcomes/blob/main/Revill_et_al_senspoweranalysis_mTBI_v_uninjured.R) - R script to calculate sensitivity power analysis for mTBI vs uninjured controls
+6.  [Revill_et_al_supple_psm_matchit_code.R](https://github.com/GraceRevill/pTBI-neuropsychiatric-outcomes/blob/main/Revill_et_al_supple_psm_matchit_code.R) - Supplementary analysis comparing 1:1 vs 2:1 propensity score matching
 
 
 ### Dataset
