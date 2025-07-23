@@ -14,7 +14,7 @@ Analysis code and results for the study
 
 Published as: 
 
-> Revill, G., Poole, N., Carlisi, C., David, A. S., Bell, V. (in press). Childhood Mild Traumatic Brain Injury is Reliably Associated with Anxiety but Not Other Examined Psychiatric Outcomes at Two-Year Follow-up, After Adjusting for Prior Mental Health. *Journal of Child Psychology and Psychiatry* https://doi.org/10.1111/jcpp.70013
+> Revill, G., Poole, N., Carlisi, C., David, A. S., Bell, V. (2025). Childhood Mild Traumatic Brain Injury is Reliably Associated with Anxiety but Not Other Examined Psychiatric Outcomes at Two-Year Follow-up, After Adjusting for Prior Mental Health. *Journal of Child Psychology and Psychiatry* https://doi.org/10.1111/jcpp.70013
 
 This archive contains the [R code](https://en.wikipedia.org/wiki/R_(programming_language)) for the analysis reported in the above study. 
 
