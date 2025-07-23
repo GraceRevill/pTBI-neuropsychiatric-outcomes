@@ -1,6 +1,6 @@
 Analysis code and results for the study
 
-#  Only Anxiety Remains Reliably Associated with New Paediatric Mild Traumatic Brain Injury at Two Years Follow-up After Adjusting for Pre-Existing Mental Health
+#  Childhood Mild Traumatic Brain Injury is Reliably Associated with Anxiety but Not Other Examined Psychiatric Outcomes at Two-Year Follow-up, After Adjusting for Prior Mental Health
 
 
 <p align="center">
@@ -12,9 +12,9 @@ Analysis code and results for the study
 		src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
 </p>
 
-Pre-printed as: 
+Published as: 
 
-> Revill, G., Poole, N., Carlisi, C., David, A. S., Bell, V. (2024). Association Between Paediatric Mild Traumatic Brain Injury and Two-Year Psychiatric Outcomes Largely Explained by Pre-Existing Mental Health Problems. medRxiv, [pre-print doi: 10.1101/2024.03.22.24304723](https://doi.org/10.1101/2024.03.22.24304723)
+> Revill, G., Poole, N., Carlisi, C., David, A. S., Bell, V. (in press). Childhood Mild Traumatic Brain Injury is Reliably Associated with Anxiety but Not Other Examined Psychiatric Outcomes at Two-Year Follow-up, After Adjusting for Prior Mental Health. *Journal of Child Psychology and Psychiatry* https://doi.org/10.1111/jcpp.70013
 
 This archive contains the [R code](https://en.wikipedia.org/wiki/R_(programming_language)) for the analysis reported in the above study. 
 
